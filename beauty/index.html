@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>30代の肌、まだ諦めてないでしょ。| BEAUTY NOTE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #F4F3F7;
+    --white:     #FFFFFF;
+    --surface:   #FAFAFC;
+    --border:    #E6E3ED;
+    --charcoal:  #2E2B36;
+    --mid:       #7A768A;
+    --light-txt: #A09CB8;
+
+    --purple:    #9B7EC8;
+    --pink:      #E07BA0;
+    --grad:      linear-gradient(120deg, #C9A8E2 0%, #E07BA0 100%);
+    --grad-soft: linear-gradient(120deg, #EEE2F8 0%, #FAE2EE 100%);
+    --accent:    #B56FC0;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--charcoal);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 15px;
+    line-height: 1.8;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    background: var(--white);
+    padding: 80px 24px 72px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--grad-soft);
+    opacity: 0.55;
+    pointer-events: none;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    top: -120px; right: -120px;
+    width: 420px; height: 420px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(197,138,222,0.28) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-eyebrow {
+    position: relative;
+    display: inline-block;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    background: var(--grad);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    border-bottom: 1px solid #D8ADE8;
+    padding-bottom: 4px;
+    margin-bottom: 24px;
+  }
+  .hero h1 {
+    position: relative;
+    font-family: 'Noto Serif JP', serif;
+    font-size: clamp(26px, 6vw, 46px);
+    font-weight: 700;
+    line-height: 1.4;
+    margin-bottom: 20px;
+    color: var(--charcoal);
+  }
+  .hero h1 em {
+    font-style: normal;
+    background: var(--grad);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero-sub {
+    position: relative;
+    font-size: 14px;
+    color: var(--mid);
+    max-width: 480px;
+    margin: 0 auto 36px;
+    line-height: 1.9;
+  }
+  .hero-scroll {
+    position: relative;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--light-txt);
+    text-transform: uppercase;
+  }
+
+  /* ── INTRO ── */
+  .intro-wrap {
+    background: var(--white);
+    padding: 64px 24px;
+  }
+  .intro {
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: center;
+  }
+  .intro-quote {
+    font-family: 'Noto Serif JP', serif;
+    font-size: clamp(17px, 4vw, 22px);
+    line-height: 1.75;
+    color: var(--charcoal);
+    margin-bottom: 20px;
+  }
+  .intro-quote span {
+    background: var(--grad);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 700;
+  }
+  .intro-body {
+    font-size: 13.5px;
+    color: var(--mid);
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  /* ── ROUTINE FLOW ── */
+  .routine-section {
+    background: var(--grad-soft);
+    padding: 52px 24px 48px;
+    text-align: center;
+  }
+  .routine-section h2 {
+    font-family: 'Noto Serif JP', serif;
+    color: var(--charcoal);
+    font-size: 17px;
+    letter-spacing: 0.08em;
+    margin-bottom: 28px;
+  }
+  .routine-flow {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    max-width: 640px;
+    margin: 0 auto;
+  }
+  .flow-step {
+    background: var(--white);
+    border: 1px solid var(--border);
+    color: var(--charcoal);
+    padding: 7px 14px;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    border-radius: 20px;
+    box-shadow: 0 2px 8px rgba(155,126,200,0.08);
+  }
+  .flow-arrow {
+    background: var(--grad);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-size: 15px;
+    flex-shrink: 0;
+    font-weight: 700;
+  }
+
+  /* ── PRODUCTS ── */
+  .products-section {
+    padding: 72px 24px;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  .section-header {
+    text-align: center;
+    margin-bottom: 52px;
+  }
+  .section-header h2 {
+    font-family: 'Noto Serif JP', serif;
+    font-size: clamp(21px, 5vw, 30px);
+    font-weight: 700;
+    line-height: 1.5;
+    margin-bottom: 10px;
+    color: var(--charcoal);
+  }
+  .section-header p {
+    font-size: 13px;
+    color: var(--mid);
+  }
+
+  .product-card {
+    background: var(--white);
+    border-radius: 16px;
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 28px;
+    align-items: start;
+    padding: 32px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 16px rgba(155,126,200,0.07);
+    border: 1px solid var(--border);
+  }
+
+  .product-img-wrap {
+    position: relative;
+  }
+  .product-img-wrap img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    display: block;
+    border-radius: 10px;
+  }
+  .product-num {
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    width: 28px;
+    height: 28px;
+    background: var(--grad);
+    color: var(--white);
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(176,111,192,0.35);
+  }
+
+  .product-badge {
+    display: inline-block;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    background: var(--grad-soft);
+    color: var(--accent);
+    padding: 3px 10px;
+    margin-bottom: 10px;
+    font-weight: 700;
+    border-radius: 20px;
+    border: 1px solid #E0C8F0;
+  }
+  .product-name {
+    font-family: 'Noto Serif JP', serif;
+    font-size: clamp(14px, 3vw, 17px);
+    font-weight: 700;
+    line-height: 1.45;
+    margin-bottom: 4px;
+    color: var(--charcoal);
+  }
+  .product-type {
+    font-size: 11px;
+    color: var(--light-txt);
+    margin-bottom: 14px;
+    letter-spacing: 0.04em;
+  }
+  .product-comment {
+    font-size: 13.5px;
+    line-height: 1.85;
+    color: var(--charcoal);
+    margin-bottom: 18px;
+    border-left: 3px solid transparent;
+    border-image: var(--grad) 1;
+    padding-left: 14px;
+  }
+  .product-price {
+    font-size: 13px;
+    color: var(--mid);
+    margin-bottom: 16px;
+  }
+  .product-price strong {
+    color: var(--charcoal);
+    font-size: 17px;
+  }
+
+  .btn-rakuten {
+    display: inline-block;
+    background: var(--grad);
+    color: var(--white);
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    padding: 10px 24px;
+    border-radius: 24px;
+    transition: opacity 0.2s, box-shadow 0.2s;
+    box-shadow: 0 3px 12px rgba(176,111,192,0.3);
+  }
+  .btn-rakuten:hover { opacity: 0.85; box-shadow: 0 5px 18px rgba(176,111,192,0.45); }
+
+  /* ── TOTAL ── */
+  .total-section {
+    background: var(--grad);
+    color: var(--white);
+    padding: 64px 24px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .total-section::before {
+    content: '';
+    position: absolute;
+    bottom: -80px; left: -80px;
+    width: 300px; height: 300px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    pointer-events: none;
+  }
+  .total-section h3 {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    color: rgba(255,255,255,0.75);
+    margin-bottom: 12px;
+  }
+  .total-price {
+    font-family: 'Noto Serif JP', serif;
+    font-size: clamp(36px, 9vw, 56px);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin-bottom: 14px;
+  }
+  .total-note {
+    font-size: 12px;
+    color: rgba(255,255,255,0.65);
+    margin-bottom: 32px;
+    line-height: 1.8;
+  }
+  .total-comment {
+    font-family: 'Noto Serif JP', serif;
+    font-size: clamp(15px, 3.5vw, 19px);
+    line-height: 1.8;
+    max-width: 460px;
+    margin: 0 auto;
+    color: rgba(255,255,255,0.92);
+  }
+  .total-comment em {
+    font-style: normal;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+
+  /* ── FOOTER ── */
+  .lp-footer {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    color: var(--light-txt);
+    padding: 32px 24px;
+    text-align: center;
+    font-size: 11px;
+    line-height: 2;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 560px) {
+    .product-card {
+      grid-template-columns: 90px 1fr;
+      gap: 16px;
+      padding: 24px 20px;
+    }
+    .product-num { width: 24px; height: 24px; font-size: 11px; top: -8px; left: -8px; }
+  }
+</style>
+</head>
+<body>
+
+<section class="hero">
+  <p class="hero-eyebrow">Beauty Note — Skincare Edit</p>
+  <h1>30代の肌、<br>まだ<em>諦めてない</em>でしょ。</h1>
+  <p class="hero-sub">毎朝5分のルーティンを変えるだけで、ベースメイクの仕上がりは別物になる。知ってた？</p>
+  <p class="hero-scroll">scroll ↓</p>
+</section>
+
+<div class="intro-wrap">
+  <div class="intro">
+    <p class="intro-quote">「ファンデが崩れる」って言う前に、<br><span>土台を疑いなさい。</span></p>
+    <p class="intro-body">ベースメイクの崩れの原因、ほとんどは乾燥です。高いファンデを買う前に、まず朝の保湿を見直して。SK-IIのルーティン、試してみなさいな。</p>
+  </div>
+</div>
+
+<section class="routine-section">
+  <h2>今日から使う、朝のルーティン</h2>
+  <div class="routine-flow">
+    <div class="flow-step">洗顔</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step">① 化粧水</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step">② 美容液</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step">③ クリーム</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step">④ CC下地</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step">完成</div>
+  </div>
+</section>
+
+<section class="products-section">
+  <div class="section-header">
+    <h2>これだけ揃えれば<br>いいのよ、4つ。</h2>
+    <p>余計なもの省いて、本当に効くものだけ。おだまり、信じて使いなさい。</p>
+  </div>
+
+  <div class="product-card">
+    <div class="product-img-wrap">
+      <span class="product-num">1</span>
+      <img src="./img/img01.jpg" alt="SK-II フェイシャル トリートメント エッセンス" loading="lazy">
+    </div>
+    <div class="product-info">
+      <span class="product-badge">楽天 化粧水1位 2025</span>
+      <p class="product-name">フェイシャル トリートメント エッセンス</p>
+      <p class="product-type">化粧水 — ピテラ™約90%以上配合</p>
+      <p class="product-comment">SK-IIといえばこれ、って知らないの？ピテラ™をこれでもかと詰め込んだ定番中の定番。キメが整うって、こういうことよ。</p>
+      <p class="product-price">75mL <strong>¥12,650</strong>〜</p>
+      <a class="btn-rakuten" href="https://hb.afl.rakuten.co.jp/ichiba/5543a2ec.1376020d.5543a2ed.251aa9ea/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fsk-ii%2Ffte_230-sgl%2F&link_type=hybrid_url&ut=eyJwYWdlIjoiaXRlbSIsInR5cGUiOiJoeWJyaWRfdXJsIiwic2l6ZSI6IjI0MHgyNDAiLCJuYW0iOjEsIm5hbXAiOiJyaWdodCIsImNvbSI6MSwiY29tcCI6ImRvd24iLCJwcmljZSI6MSwiYm9yIjoxLCJjb2wiOjEsImJidG4iOjEsInByb2QiOjAsImFtcCI6ZmFsc2V9" target="_blank" rel="nofollow">楽天で見る</a>
+    </div>
+  </div>
+
+  <div class="product-card">
+    <div class="product-img-wrap">
+      <span class="product-num">2</span>
+      <img src="./img/img02.jpg" alt="SK-II ジェノプティクス インフィニットオーラ エッセンス" loading="lazy">
+    </div>
+    <div class="product-info">
+      <span class="product-badge">医薬部外品 — 美白有効成分配合</span>
+      <p class="product-name">ジェノプティクス インフィニットオーラ エッセンス</p>
+      <p class="product-type">美容液 — 8つの効果・20以上の学術論文</p>
+      <p class="product-comment">シミ・シワ・くすみ・毛穴、全部まとめて面倒見てくれる美容液。30年の研究があるの、医薬部外品なの。文句ある？</p>
+      <p class="product-price">30mL <strong>¥22,000</strong>〜</p>
+      <a class="btn-rakuten" href="https://hb.afl.rakuten.co.jp/ichiba/5543a2ec.1376020d.5543a2ed.251aa9ea/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fsk-ii%2Fgie%2F&link_type=hybrid_url&ut=eyJwYWdlIjoiaXRlbSIsInR5cGUiOiJoeWJyaWRfdXJsIiwic2l6ZSI6IjI0MHgyNDAiLCJuYW0iOjEsIm5hbXAiOiJyaWdodCIsImNvbSI6MSwiY29tcCI6ImRvd24iLCJwcmljZSI6MSwiYm9yIjoxLCJjb2wiOjEsImJidG4iOjEsInByb2QiOjAsImFtcCI6ZmFsc2V9" target="_blank" rel="nofollow">楽天で見る</a>
+    </div>
+  </div>
+
+  <div class="product-card">
+    <div class="product-img-wrap">
+      <span class="product-num">3</span>
+      <img src="./img/img03.jpg" alt="SK-II スキンパワー リニュー エアリークリーム" loading="lazy">
+    </div>
+    <div class="product-info">
+      <span class="product-badge">朝メイク前に使えるエアリータイプ</span>
+      <p class="product-name">スキンパワー リニュー エアリークリーム</p>
+      <p class="product-type">クリーム — 混合肌・普通肌向け</p>
+      <p class="product-comment">重いクリームが苦手なあなた向けのさらっとタイプ。これ塗ってからファンデのると、全然違うから。信じなくていいけど、後で絶対思い出すわよ。</p>
+      <p class="product-price">50g <strong>¥18,700</strong>〜</p>
+      <a class="btn-rakuten" href="https://hb.afl.rakuten.co.jp/ichiba/5543a2ec.1376020d.5543a2ed.251aa9ea/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fsk-ii%2Fspc-rn%2F&link_type=hybrid_url&ut=eyJwYWdlIjoiaXRlbSIsInR5cGUiOiJoeWJyaWRfdXJsIiwic2l6ZSI6IjI0MHgyNDAiLCJuYW0iOjEsIm5hbXAiOiJyaWdodCIsImNvbSI6MSwiY29tcCI6ImRvd24iLCJwcmljZSI6MSwiYm9yIjoxLCJjb2wiOjEsImJidG4iOjEsInByb2QiOjAsImFtcCI6ZmFsc2V9" target="_blank" rel="nofollow">楽天で見る</a>
+    </div>
+  </div>
+
+  <div class="product-card">
+    <div class="product-img-wrap">
+      <span class="product-num">4</span>
+      <img src="./img/img04.jpg" alt="SK-II ジェノプティクス CC プライマー" loading="lazy">
+    </div>
+    <div class="product-info">
+      <span class="product-badge">楽天 メイクアップ1位 2年連続</span>
+      <p class="product-name">ジェノプティクス CC プライマー</p>
+      <p class="product-type">CC下地 — SPF50+ / PA++++ / 1本5役</p>
+      <p class="product-comment">日焼け止め・保湿・トーンアップ・下地・ナチュラルカバー、全部これ1本でいいのよ。2年連続1位の実力、レビュー645件・評価4.46。これ以上なにが必要？</p>
+      <p class="product-price">30g <strong>¥9,900</strong></p>
+      <a class="btn-rakuten" href="https://hb.afl.rakuten.co.jp/ichiba/5543a2ec.1376020d.5543a2ed.251aa9ea/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fsk-ii%2Fgccr%2F&link_type=hybrid_url&ut=eyJwYWdlIjoiaXRlbSIsInR5cGUiOiJoeWJyaWRfdXJsIiwic2l6ZSI6IjI0MHgyNDAiLCJuYW0iOjEsIm5hbXAiOiJyaWdodCIsImNvbSI6MSwiY29tcCI6ImRvd24iLCJwcmljZSI6MSwiYm9yIjoxLCJjb2wiOjEsImJidG4iOjEsInByb2QiOjAsImFtcCI6ZmFsc2V9" target="_blank" rel="nofollow">楽天で見る</a>
+    </div>
+  </div>
+</section>
+
+<section class="total-section">
+  <h3>4アイテム セット価格目安</h3>
+  <p class="total-price">¥63,250</p>
+  <p class="total-note">各最小サイズで揃えた場合の参考価格（税込）<br>楽天ポイント還元・SPUで実質負担は下がります</p>
+  <p class="total-comment">高い、って思った？<br>毎朝の5分に<em>投資できない人</em>は、<br>10年後の肌を見て後悔するのよ。おだまり。</p>
+</section>
+
+<footer class="lp-footer">
+  <p>掲載商品はすべてSK-II公式楽天市場店の商品です。</p>
+  <p>本ページはアフィリエイトリンクを含みます。</p>
+  <p style="margin-top: 6px;">© BEAUTY NOTE</p>
+</footer>
+
+</body>
+</html>
