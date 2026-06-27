@@ -135,8 +135,16 @@
     font-size:.88rem; letter-spacing:.1em; font-weight:700;
     box-shadow:0 4px 16px rgba(155,127,166,.3);
     transition:transform .2s, box-shadow .2s;
+    position:relative; overflow:hidden;
   }
   .cta-btn:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(155,127,166,.4); }
+  /* ③ シャイン（光の走り） */
+  .cta-btn::after {
+    content:""; position:absolute; top:0; left:-75%; width:50%; height:100%;
+    background:linear-gradient(120deg,rgba(255,255,255,0) 0%,rgba(255,255,255,.55) 50%,rgba(255,255,255,0) 100%);
+    transform:skewX(-20deg); transition:left .6s ease; pointer-events:none;
+  }
+  .cta-btn:hover::after { left:125%; }
 
   /* DRYER CARD */
   .dryer-imgs { display:grid; grid-template-columns:1fr 1fr; gap:.6rem; margin-bottom:1.2rem; }
@@ -200,6 +208,13 @@
   /* FADE */
   .fade { opacity:0; transform:translateY(16px); transition:opacity .6s ease, transform .6s ease; }
   .fade.on { opacity:1; transform:none; }
+  /* ① 商品画像のホバー拡大＋影 */
+  .sec img { transition:transform .35s ease, box-shadow .35s ease; }
+  .sec img:hover { transform:scale(1.03); box-shadow:0 12px 30px rgba(155,127,166,.28); }
+  /* ④ 左からスライドイン（スマモニ画像など） */
+  .slide-left { opacity:0; transform:translateX(-40px); transition:opacity .7s ease, transform .7s ease; }
+  .fade.on .slide-left { opacity:1; transform:none; }
+  .fade.on .slide-left:hover { transform:scale(1.03); }
 </style>
 </head>
 <body>
@@ -414,7 +429,7 @@
   <p class="sec-label">美容・モニター</p>
   <p class="sec-title">美容モニターで<br>謝礼もらえるって知ってた？</p>
   <p class="sec-desc">エステとか脱毛とか、行ってみたいけど高いしなぁって思ってたら、モニター案件やと体験できて謝礼までもらえるらしいねん。スマモニで案件探して応募するだけ。やらん理由なくない？</p>
-  <img src="./img/pc.png" alt="スマモニ" style="width:100%;border-radius:12px;display:block;margin-bottom:.6rem;">
+  <img src="./img/pc.png" alt="スマモニ" class="slide-left" style="width:100%;border-radius:12px;display:block;margin-bottom:.6rem;">
   <p style="font-size:.8rem;color:#888;line-height:1.7;margin-bottom:1.2rem;">こういうの地味にお小遣い稼ぎになるねんで〜🤭</p>
   <div style="background:linear-gradient(135deg,#FFF5F5,#FFF0F8);border-radius:12px;padding:1.2rem;margin-bottom:1.2rem;border:1px solid rgba(155,127,166,0.15);">
     <p style="font-size:.7rem;letter-spacing:.2em;color:var(--mauve);text-transform:uppercase;margin-bottom:.5rem;">Smamoni</p>
