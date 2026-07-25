@@ -180,6 +180,28 @@
   .feature-list li::before { content:'✦'; position:absolute; left:0; color:var(--mauve); font-size:.6rem; top:.5rem; }
   .feature-list li:last-child { border-bottom:none; }
 
+  /* RAKUTEN ITEMS CARD */
+  .rakuten-grid { display:flex; flex-direction:column; gap:.6rem; margin-bottom:1.2rem; }
+  .rakuten-card {
+    display:flex; align-items:center; gap:.8rem;
+    padding:.8rem; background:var(--bg2); border-radius:8px;
+    border:1px solid var(--border);
+    text-decoration:none; color:inherit; transition:background .2s;
+  }
+  a.rakuten-card:hover { background:#F0E8F5; }
+  .rakuten-thumb {
+    width:64px; height:64px; border-radius:8px; flex-shrink:0;
+    background:linear-gradient(135deg,#F0E8F5,#F5E8F0);
+    display:flex; align-items:center; justify-content:center;
+    font-size:.68rem; color:var(--mauve); letter-spacing:.05em; text-align:center;
+    overflow:hidden;
+  }
+  .rakuten-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
+  .rakuten-info { flex:1; min-width:0; }
+  .rakuten-name { font-size:.8rem; font-weight:600; color:var(--text); margin-bottom:.2rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .rakuten-copy { font-size:.72rem; color:#666; line-height:1.6; margin-bottom:.2rem; }
+  .rakuten-price { font-size:.72rem; color:var(--muted); }
+
   /* LINKS */
   .links { padding:1.8rem 1.2rem; border-bottom:1px solid var(--light); }
   .links-title { font-size:.78rem; color:var(--muted); text-align:center; margin-bottom:1rem; letter-spacing:.1em; }
@@ -493,6 +515,59 @@
   <a href="https://px.a8.net/svt/ejp?a8mat=4B7ZH6+4OHPQY+5RW6+5YJRM" class="cta-btn" target="_blank" rel="noopener sponsored" style="margin-top:.6rem;background:#fff;color:var(--mauve);border:1.5px solid var(--mauve);box-shadow:none;">
     どんなドレスあるか見てみる →
   </a>
+</div>
+
+<div class="sec-divider"></div>
+
+<!-- RAKUTEN -->
+<div class="sec fade" id="rakuten">
+  <p class="sec-label">楽天</p>
+  <p class="sec-title">楽天で人気の<br>コスメ・着圧ストッキング</p>
+  <p class="sec-desc">「褒め言葉」より「使い続けてる」が信頼の証やと思ってるから、実際にレビューが集まってるアイテムだけ、ちゃんと選んで置いとくわ。今ちょうど厳選中やから、もうちょい待っててな。</p>
+  <!-- RAKUTEN_ITEMS_START -->
+  <div class="rakuten-grid">
+    <a class="rakuten-card" href="https://hb.afl.rakuten.co.jp/hgc/g00u7rbn.vnnmbd15.g00u7rbn.vnnmc274/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fyunth%2Fyb-121-001%2F&amp;rafcid=wsc_i_ra_effa7dcb-3de9-40e3-a5e8-d975b8d13ed4" target="_blank" rel="nofollow sponsored noopener">
+      <div class="rakuten-thumb"><img src="https://thumbnail.image.rakuten.co.jp/@0_mall/yunth/cabinet/11294195/11294196/event/yb-121-001_260725.jpg?_ex=400x400" alt="【クーポン+セット26日9:59マデ】【公式】Yunth マルチスクエアシートマスク | シートマス"></div>
+      <div class="rakuten-info">
+        <p class="rakuten-name">【クーポン+セット26日9:59マデ】【公式】Yunth マルチスクエアシートマスク | シートマス</p>
+        <p class="rakuten-copy">国産の生ビタミシートマスク、ほんまお肌がツヤツヤになっちゃうのめっちゃええやん。</p>
+        <p class="rakuten-price">¥2,640</p>
+      </div>
+    </a>
+    <a class="rakuten-card" href="https://hb.afl.rakuten.co.jp/hgc/g00tu64n.vnnmb8ee.g00tu64n.vnnmce86/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Ftutuanna%2F24512008190107%2F&amp;rafcid=wsc_i_ra_effa7dcb-3de9-40e3-a5e8-d975b8d13ed4" target="_blank" rel="nofollow sponsored noopener">
+      <div class="rakuten-thumb"><img src="https://thumbnail.image.rakuten.co.jp/@0_mall/tutuanna/cabinet/11096047/13220625/24512008190107_01.jpg?_ex=400x400" alt="【期間限定10%OFFタイムSALE 7/26 01:59迄】 [感動のストッキング・着圧]引き締め"></div>
+      <div class="rakuten-info">
+        <p class="rakuten-name">【期間限定10%OFFタイムSALE 7/26 01:59迄】 [感動のストッキング・着圧]引き締め</p>
+        <p class="rakuten-copy">着圧でめっちゃ引き締めて素肌みたいなカバー力できれいに見えるし伝線もしにくいやん</p>
+        <p class="rakuten-price">¥584</p>
+      </div>
+    </a>
+    <a class="rakuten-card" href="https://hb.afl.rakuten.co.jp/hgc/g00ut4mn.vnnmb579.g00ut4mn.vnnmc225/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fslbsjapan%2Fwatercolorliptattoo02%2F&amp;rafcid=wsc_i_ra_effa7dcb-3de9-40e3-a5e8-d975b8d13ed4" target="_blank" rel="nofollow sponsored noopener">
+      <div class="rakuten-thumb"><img src="https://thumbnail.image.rakuten.co.jp/@0_mall/slbsjapan/cabinet/12694244/13519739/10_ptb_mama.jpg?_ex=400x400" alt="＼マラソン限定PT10％バック／【24時間持続リップ】アーリアンス 水彩リップタトゥー（全5色） 落"></div>
+      <div class="rakuten-info">
+        <p class="rakuten-name">＼マラソン限定PT10％バック／【24時間持続リップ】アーリアンス 水彩リップタトゥー（全5色） 落</p>
+        <p class="rakuten-copy">水彩リップめっちゃええやん、ほんまに24時間落ちへんし色づきもナチュラルでええで</p>
+        <p class="rakuten-price">¥3,630</p>
+      </div>
+    </a>
+    <a class="rakuten-card" href="https://hb.afl.rakuten.co.jp/hgc/g00tx9an.vnnmbc24.g00tx9an.vnnmc4f7/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fsuzuyaebisudo%2Fr-dalba%2F&amp;rafcid=wsc_i_ra_effa7dcb-3de9-40e3-a5e8-d975b8d13ed4" target="_blank" rel="nofollow sponsored noopener">
+      <div class="rakuten-thumb"><img src="https://thumbnail.image.rakuten.co.jp/@0_mall/suzuyaebisudo/cabinet/product/item02/dalba_01v7.jpg?_ex=400x400" alt="レビュー投稿で100円クーポン d&#x27;Alba ダルバ 日焼止め ウォータフル サンクリーム ダルバ "></div>
+      <div class="rakuten-info">
+        <p class="rakuten-name">レビュー投稿で100円クーポン d&#x27;Alba ダルバ 日焼止め ウォータフル サンクリーム ダルバ </p>
+        <p class="rakuten-copy">ダルバのウォータフルサンクリーム、日焼け止めなのに軽いし下地にもなってほんまええやん。</p>
+        <p class="rakuten-price">¥2,360</p>
+      </div>
+    </a>
+    <a class="rakuten-card" href="https://hb.afl.rakuten.co.jp/hgc/g00po0zn.vnnmbccc.g00po0zn.vnnmc6e3/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fluire%2Fpmm-yami%2F&amp;m=http%3A%2F%2Fm.rakuten.co.jp%2Fluire%2Fi%2F10004549%2F&amp;rafcid=wsc_i_is_effa7dcb-3de9-40e3-a5e8-d975b8d13ed4" target="_blank" rel="nofollow sponsored noopener">
+      <div class="rakuten-thumb"><img src="https://thumbnail.image.rakuten.co.jp/@0_mall/luire/cabinet/plus04/mask26sm-2_off50.jpg?_ex=400x400" alt="【半額】シートマスク 大容量70枚(35枚×2点) パック フェイスパック フェイスマスク 顔パック"></div>
+      <div class="rakuten-info">
+        <p class="rakuten-name">【半額】シートマスク 大容量70枚(35枚×2点) パック フェイスパック フェイスマスク 顔パック</p>
+        <p class="rakuten-copy">ホンマめっちゃ優秀なベストコスメ殿堂入り、70枚も入って半額ってやばいやん。</p>
+        <p class="rakuten-price">¥1,640</p>
+      </div>
+    </a>
+  </div>
+  <!-- RAKUTEN_ITEMS_END -->
 </div>
 
 <footer>
