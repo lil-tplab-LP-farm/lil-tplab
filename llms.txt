@@ -1,0 +1,9 @@
+# lil-tplab.tech
+
+> 30代女性のリアルな美容・恋愛・婚活・お金・メンタルを発信する個人ブログサイト。
+
+## Pages
+
+- [Yちゃんのページ](https://lil-tplab.tech/): 大阪弁OLが綴る30歳からの美容・恋愛・お金・メンタルの記録
+- [Yunaのページ](https://lil-tplab.tech/yuna/): 東京OLが綴る婚活・占い・自分磨きの記録
+- [BEAUTY NOTE](https://lil-tplab.tech/beauty/): 30代の肌悩みに向き合うビューティーアイテムまとめ
