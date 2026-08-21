@@ -1,2 +1,8 @@
 .DS_Store
 index.bak_*
+
+# 2026/08/21: このリポジトリはpublic(GitHub Pagesで公開中)。CLAUDE.mdはユイ・ユナの
+# 相互不可視戦略そのものを説明する内部運用ドキュメントなので、誤ってcommit/pushされないよう除外する。
+# ローカルのClaude Codeセッションはgitの追跡有無に関わらずこのファイルを読み込めるので、
+# 除外しても動作上の支障はない。
+CLAUDE.md
