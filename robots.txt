@@ -1,4 +1,6 @@
 User-agent: *
 Allow: /
+Disallow: /go/
+Disallow: /yuna/go/
 
 Sitemap: https://lil-tplab.tech/sitemap.xml
