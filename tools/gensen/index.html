@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>源泉徴収・請求額計算ツール(報酬から振込額、欲しい振込額から請求額を逆算)</title>
+<meta name="description" content="原稿料・講演料などの源泉徴収税額(10.21%・100万円超は20.42%)と振込額を計算し、欲しい振込額から請求すべき報酬額を逆算します。消費税を区分する場合・しない場合に対応。入力内容は送信されません。">
+<style>
+  body { font-family: -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif; max-width: 760px; margin: 0 auto; padding: 16px; line-height: 1.8; color: #222; }
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.15rem; margin-top: 2rem; border-left: 4px solid #4a7; padding-left: 8px; }
+  fieldset { border: 1px solid #ccc; border-radius: 6px; margin: 12px 0; }
+  label { display: inline-block; margin: 4px 12px 4px 0; }
+  input[type=number] { width: 11em; padding: 4px; font-size: 1rem; }
+  #result { background: #f3f8f4; border-radius: 6px; padding: 12px; margin-top: 12px; min-height: 2em; }
+  #result .err { color: #b00; }
+  .note { font-size: .85rem; color: #555; }
+  .warn { background: #fff8e1; border: 1px dashed #c90; padding: 8px; border-radius: 6px; font-size: .9rem; }
+  footer { margin-top: 3rem; font-size: .8rem; color: #666; border-top: 1px solid #ddd; padding-top: 8px; }
+</style>
+</head>
+<body>
+<h1>源泉徴収・請求額計算ツール</h1>
+<p>原稿料・講演料などの源泉徴収税額と振込額を計算し、「この金額を受け取りたい」から請求額を逆算します。計算はこのページの中だけで行い、入力した内容はどこにも送られません。</p>
+<div class="warn">
+  <b>税務相談ではなく、目安です。</b>すべての報酬が源泉徴収の対象ではありません。対象になる報酬の種類や、払う側・もらう側(個人か法人かなど)によって扱いが異なります。最終的な判断は、税務署または税理士にご確認ください。<br>
+  <b>2027年(令和9年)分以後の報酬には使えません。</b>国税庁の公式ページに、令和9年分以後は防衛特別所得税が加算される予定と書かれています。この道具は現行の率(10.21%・100万円超の部分は20.42%)で計算します。最新は公式ページでご確認ください。
+</div>
+
+<h2>計算する</h2>
+<fieldset>
+  <legend>① 何を調べるか</legend>
+  <label><input type="radio" name="mode" value="forward" checked> 報酬 → 振込額</label>
+  <label><input type="radio" name="mode" value="reverse"> 欲しい振込額 → 請求額</label>
+</fieldset>
+<fieldset>
+  <legend>② 金額(円)</legend>
+  <label><span id="amtLabel">報酬額(税抜)</span> <input type="number" id="amt" min="0" max="100000000" step="1" value="100000"></label>
+  <div class="note">1億円まで。円の整数で入れてください。</div>
+</fieldset>
+<fieldset>
+  <legend>③ 消費税の扱い</legend>
+  <label><input type="radio" name="tax" value="separate" checked> 消費税10%を別に請求する(請求書で報酬と消費税を区分する)</label><br>
+  <label><input type="radio" name="tax" value="none"> 消費税なし</label><br>
+  <label><input type="radio" name="tax" value="included"> 税込の金額で、請求書に区分していない</label>
+</fieldset>
+<div id="result" aria-live="polite"></div>
+<p class="note">計算の基準は国税庁の公式ページ(確認日 <span id="chk"></span>):<span id="src"></span></p>
+
+<h2>源泉徴収税額の計算方法</h2>
+<ul>
+  <li>源泉徴収の対象額が100万円以下:対象額 × 10.21%</li>
+  <li>100万円を超える:(対象額 − 100万円)× 20.42% + 102,100円</li>
+  <li>1円未満の端数は切り捨てです。</li>
+</ul>
+<p>どちらも復興特別所得税を含んだ率です。対象額が100万円ちょうどの時の税額は102,100円で、200万円なら306,300円です。</p>
+
+<h2>対象になりやすい報酬の例</h2>
+<p>国税庁の公式ページには、原稿料、講演料などが例として挙がっています。デザイン料なども、報酬の種類によっては対象になります。謝金・取材費・調査費なども、実態が原稿料・講演料と同じなら対象です。ただし、50,000円以下の賞金・謝金は源泉徴収が不要とされています。通常必要な範囲の旅費・宿泊費で、直接払いのものは、対象から外せるとされています。どの報酬が対象かは、公式ページで確認してください。</p>
+
+<h2>請求書の書き方(消費税を対象額から外せる場合)</h2>
+<p>請求書などで、報酬と消費税が明確に区分されている場合は、報酬の額だけを源泉徴収の対象額にして差し支えない、と公式ページに書かれています(消費税額は対象外にできます)。区分されていないと、税込の全額が対象になります。</p>
+<p>たとえば報酬100,000円+消費税10,000円で区分して請求すると、対象額は100,000円で、源泉徴収税額は10,210円、振込額は99,790円です。区分せず税込110,000円とだけ書くと、対象額は110,000円で、税額は11,231円、振込額は98,769円になります。</p>
+
+<h2>手取額が決まっている契約の逆算</h2>
+<p>「振込額(手取額)を◯◯円にしたい」という契約では、公式ページに次の式が出ています。</p>
+<ul>
+  <li>手取額が897,900円以下:手取額 ÷ 0.8979 = 対象額</li>
+  <li>それを超える場合:(手取額 − 102,100)÷ 0.7958 = 対象額</li>
+</ul>
+<p>公式の例は、手取額100,000円 → 対象額111,370円、源泉徴収税額11,370円です。この道具は、割り算の誤差が出ないよう、報酬額を1円ずつ当てはめて振込額がぴったり合う最小の額を探しています(消費税を別に請求する場合は、その分も含めて探します)。ぴったり合う額が無い場合は、その旨と、振込額が届く最小の金額を表示します。</p>
+
+<h2>よくある間違い</h2>
+<ul>
+  <li><b>消費税を区分しないまま請求する</b>:税込の全額が対象になり、税額が大きくなります。</li>
+  <li><b>手取額を0.8979で割るだけで済ませる</b>:対象額が100万円を超える場合は、別の式になります。</li>
+  <li><b>端数を四捨五入する</b>:源泉徴収税額は1円未満切り捨てです。</li>
+  <li><b>対象でない報酬にも引いてしまう</b>:報酬の種類や、相手が個人か法人かで扱いが変わります。</li>
+  <li><b>2027年以降もこの率で計算する</b>:率が変わる予定です。</li>
+</ul>
+<p>源泉徴収された税額の扱い(確定申告での精算など)は、国税庁の公式ページで確認してください。</p>
+
+<footer>
+  源泉徴収・請求額計算ツール運営 ／ <a href="about.html">運営者情報・プライバシー</a> ／ このページは入力内容の収集・送信、アクセス解析、Cookieの利用を行いません。計算結果は目安です。
+</footer>
+
+<script src="calc.js"></script>
+<script>
+function $(id) { return document.getElementById(id); }
+function yen(n) { return n.toLocaleString("ja-JP") + "円"; }
+function val(name) { return document.querySelector('input[name="' + name + '"]:checked').value; }
+var TAXLABEL = { separate: "消費税10%を別に請求(報酬と消費税を区分)", none: "消費税なし", included: "税込の金額で区分していない" };
+
+function lines(r, mode) {
+  var o = [];
+  if (mode === "separate") {
+    o.push("報酬額(税抜):<b>" + yen(r.fee) + "</b>");
+    o.push("消費税(報酬の10%、1円未満切り捨て):" + yen(r.tax) + "(" + r.fee.toLocaleString("ja-JP") + " × 10%)");
+    o.push("請求額(報酬+消費税):" + yen(r.invoice));
+    o.push("源泉徴収の対象額(報酬のみ):" + yen(r.target));
+  } else {
+    o.push((mode === "included" ? "請求額(税込・区分なし)" : "報酬額") + ":<b>" + yen(r.fee) + "</b>");
+    o.push("源泉徴収の対象額:" + yen(r.target) + (mode === "included" ? "(区分がないため全額が対象)" : ""));
+  }
+  var t = r.target;
+  if (t <= 1000000) o.push("源泉徴収税額:<b>" + yen(r.withholding) + "</b>(" + t.toLocaleString("ja-JP") + " × 10.21%、1円未満切り捨て)");
+  else o.push("源泉徴収税額:<b>" + yen(r.withholding) + "</b>((" + t.toLocaleString("ja-JP") + " − 1,000,000)× 20.42% + 102,100、1円未満切り捨て)");
+  o.push("振込額(請求額 − 源泉徴収税額):<b>" + yen(r.transfer) + "</b>(" + r.invoice.toLocaleString("ja-JP") + " − " + r.withholding.toLocaleString("ja-JP") + ")");
+  return o;
+}
+
+function update() {
+  var mode = val("mode"), tax = val("tax"), box = $("result");
+  $("amtLabel").textContent = mode === "forward" ? (tax === "included" ? "税込の請求額" : "報酬額(税抜)") : "欲しい振込額";
+  var raw = $("amt").value, n = Number(raw);
+  if (raw === "" || !validAmount(n)) { box.innerHTML = '<span class="err">金額は0円以上1億円以下の整数で入れてください。</span>'; return; }
+  var out = ["扱い:" + TAXLABEL[tax]];
+  if (mode === "forward") {
+    out = out.concat(lines(forward(n, tax), tax));
+  } else {
+    var q = reverse(n, tax);
+    if (q.tooLarge) { box.innerHTML = '<span class="err">この振込額になる報酬額が、上限(1億円)を超えます。</span>'; return; }
+    if (q.exact) {
+      out.push("振込額を " + yen(n) + " にするために請求する額(最小):");
+    } else {
+      out.push('<span class="err">振込額がちょうど ' + yen(n) + " になる報酬額はありません。</span>振込額が " + yen(n) + " 以上になる最小の例を出します:");
+    }
+    out = out.concat(lines(q.result, tax));
+  }
+  box.innerHTML = out.join("<br>");
+}
+
+$("chk").textContent = GENSEN_CHECKED_AT;
+$("src").innerHTML = GENSEN_SOURCES.map(function (s) { return '<a href="' + s.url + '" rel="noopener">' + s.label + "</a>"; }).join(" / ");
+Array.prototype.forEach.call(document.getElementsByName("mode"), function (el) { el.addEventListener("change", update); });
+Array.prototype.forEach.call(document.getElementsByName("tax"), function (el) { el.addEventListener("change", update); });
+$("amt").addEventListener("input", update);
+update();
+</script>
+</body>
+</html>
