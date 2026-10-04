@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>日割り・日数計算機(初日を含む/含まない・営業日数・月またぎ内訳)</title>
+<meta name="description" content="開始日と終了日の日数、○日後・○日前の日付、月額の日割り額(月の実日数で割る方式と年365日で割る方式)、営業日数を計算します。入力内容は送信されません。">
+<style>
+  body { font-family: -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif; max-width: 760px; margin: 0 auto; padding: 16px; line-height: 1.8; color: #222; }
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.15rem; margin-top: 2rem; border-left: 4px solid #4a7; padding-left: 8px; }
+  fieldset { border: 1px solid #ccc; border-radius: 6px; margin: 12px 0; }
+  label { display: inline-block; margin: 4px 12px 4px 0; }
+  input[type=number] { width: 8em; padding: 4px; font-size: 1rem; }
+  input[type=date], select { padding: 4px; font-size: 1rem; }
+  #result { background: #f3f8f4; border-radius: 6px; padding: 12px; margin-top: 12px; min-height: 2em; }
+  #result .err { color: #b00; }
+  table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+  th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
+  .note { font-size: .85rem; color: #555; }
+  .warn { background: #fff8e1; border: 1px dashed #c90; padding: 8px; border-radius: 6px; font-size: .9rem; }
+  footer { margin-top: 3rem; font-size: .8rem; color: #666; border-top: 1px solid #ddd; padding-top: 8px; }
+</style>
+</head>
+<body>
+<h1>日割り・日数計算機</h1>
+<p>開始日と終了日の日数、○日後・○日前の日付、月額の日割り額、営業日数が出ます。計算はこのページの中だけで行い、入力した内容はどこにも送られません。日割りのやり方は契約・規約で決まるので、結果は目安としてお使いください。</p>
+
+<h2>計算する</h2>
+<fieldset>
+  <legend>① 何を調べるか</legend>
+  <label><input type="radio" name="mode" value="range" checked> 開始日〜終了日の日数・日割り</label>
+  <label><input type="radio" name="mode" value="after"> ○日後の日付</label>
+  <label><input type="radio" name="mode" value="before"> ○日前の日付</label>
+</fieldset>
+<fieldset>
+  <legend>② 日付</legend>
+  <label>開始日 <input type="date" id="start" value="2026-10-01"></label>
+  <span id="endBox"><label>終了日 <input type="date" id="end" value="2026-10-31"></label></span>
+  <span id="nBox" style="display:none"><label>日数 <input type="number" id="n" min="0" step="1" value="30"></label></span>
+  <div><label><input type="checkbox" id="inc" checked> 初日(開始日)を含める</label></div>
+</fieldset>
+<div id="rangeOnly">
+<fieldset>
+  <legend>③ 日割り額(任意)</legend>
+  <label>月額(円) <input type="number" id="monthly" min="0" step="1" value="30000"></label>
+  <label>端数処理
+    <select id="rounding"><option value="floor">切り捨て</option><option value="round">四捨五入</option><option value="ceil">切り上げ</option></select>
+  </label>
+  <div class="note">月額を空欄にすると、日割り額は計算しません。円未満の端数を、どの時点で処理するかも契約で異なります。ここでは「月ごとに端数処理して合計」します。</div>
+</fieldset>
+<fieldset>
+  <legend>④ 営業日数(任意)</legend>
+  <label><input type="checkbox" id="biz"> 営業日数(土日を除く)も数える</label>
+  <div class="note">祝日は<b>2026年・2027年分のみ</b>内蔵しています(内閣府の公式ページで確認、確認日 <span id="hcheck"></span>、<a id="hsrc" rel="noopener">出典</a>)。それ以外の年が含まれる時は土日のみ除外します。会社独自の休業日・年末年始休みなどは反映されません。</div>
+</fieldset>
+</div>
+<div id="result" aria-live="polite"></div>
+
+<h2>日割りの2つの方式</h2>
+<p>日割りには、大きく2つの考え方があります。</p>
+<ul>
+  <li><b>方式A:その月の実日数で割る</b>(月額 × 対象日数 ÷ その月の日数)。30日の月は30で、31日の月は31で割ります。同じ月額でも、1日あたりの金額は月によって変わります。</li>
+  <li><b>方式B:年間日数で割る</b>(月額 × 12 ÷ 365 × 対象日数)。1日あたりの金額は一年を通して同じです。うるう年は366で割る契約もあるため、この道具は365で固定して表示します(366で割りたい時は結果が少し変わります)。</li>
+</ul>
+<p>どちらが正しいかは決まっておらず、契約書・利用規約の書き方で決まります。この道具は両方を並べて表示するだけです。</p>
+
+<h2>初日を入れるかで1日ずれる例</h2>
+<p>10月1日から10月31日まで。</p>
+<ul>
+  <li>初日を含める(1日目として数える):31日間</li>
+  <li>初日を含めない(翌日から数える):30日間</li>
+</ul>
+<p>「10月1日から10月31日まで利用」のように両端の日を使う場合は、含める数え方になることが多いです。「申込日から30日後まで」のように、その日を数えない言い方もあります。どちらかは、契約の文言で確認してください。</p>
+
+<h2>うるう年の扱い</h2>
+<p>うるう年は、2月が29日になります(西暦が4で割り切れる年。ただし100で割り切れて400で割り切れない年は平年)。2028年の2月は29日です。方式Aでは、2月の日割りの分母が28ではなく29になります。たとえば月額30,000円で2028年2月15日〜29日(15日間・初日を含む)を切り捨てで計算すると、30,000×15÷29 = 15,517円になります(平年の2月なら28で割るので金額が変わります)。方式Bでは、うるう年でも分母は365のままです。</p>
+
+<h2>よくある間違い</h2>
+<ul>
+  <li><b>どの月も30日で割る</b>:方式Aでは、その月の実日数で割るのが基本です。30日固定は、契約でそう決められている場合だけです。</li>
+  <li><b>初日を数え忘れる/二重に数える</b>:開始日〜終了日の差だけでは、初日を含めた日数より1日少なくなります。</li>
+  <li><b>月をまたぐのに合計で1回だけ割る</b>:方式Aでは、月ごとの日数と、その月の日数で別々に計算します。この道具は月ごとの内訳を出します。</li>
+  <li><b>祝日を忘れる</b>:営業日数は土日だけ除いても、祝日の分だけずれます。ただし会社ごとの休みもあるため、最終的には自社の営業日で確認します。</li>
+  <li><b>端数処理の方法・タイミングを決めていない</b>:切り捨て・四捨五入・切り上げで1円違うことがあります。</li>
+</ul>
+<p class="note">ここに書いた方式の説明は一般的な計算の考え方で、特定のサービスや契約の取り扱いを示すものではありません。日割りのやり方は契約・規約で決まります。結果は目安です。</p>
+
+<footer>
+  日割り・日数計算ツール運営 ／ <a href="about.html">運営者情報・プライバシー</a> ／ このページは入力内容の収集・送信、アクセス解析、Cookieの利用を行いません。計算結果は目安です。
+</footer>
+
+<script src="calc.js"></script>
+<script>
+function $(id) { return document.getElementById(id); }
+function yen(n) { return n.toLocaleString("ja-JP") + "円"; }
+var ROUND_LABEL = { floor: "切り捨て", round: "四捨五入", ceil: "切り上げ" };
+
+function currentMode() { return document.querySelector('input[name="mode"]:checked').value; }
+
+function update() {
+  var mode = currentMode(), out = [], box = $("result");
+  $("endBox").style.display = mode === "range" ? "" : "none";
+  $("nBox").style.display = mode === "range" ? "none" : "";
+  $("rangeOnly").style.display = mode === "range" ? "" : "none";
+  var start = parseYMD($("start").value), inc = $("inc").checked;
+  if (start === null) { box.innerHTML = '<span class="err">開始日を入れてください。</span>'; return; }
+
+  if (mode !== "range") {
+    var nv = $("n").value, n = Number(nv);
+    if (nv === "" || !isFinite(n) || n < 0 || Math.floor(n) !== n || n > 100000) { box.innerHTML = '<span class="err">日数は0以上の整数で入れてください。</span>'; return; }
+    if (inc && n === 0) { box.innerHTML = '<span class="err">初日を含める場合、日数は1以上にしてください。</span>'; return; }
+    var t = shiftDate(start, n, mode, inc);
+    out.push("開始日 " + fmt(start) + " の " + n + "日" + (mode === "after" ? "後" : "前") + ":<b>" + fmt(t) + "</b>");
+    out.push('<span class="note">' + (inc ? "開始日を1日目として数えています(開始日 " + (mode === "after" ? "+" : "−") + " " + (n - 1) + "日)。" : "開始日の翌日(前日)を1日目として数えています(開始日 " + (mode === "after" ? "+" : "−") + " " + n + "日)。") + "</span>");
+    box.innerHTML = out.join("<br>");
+    return;
+  }
+
+  var end = parseYMD($("end").value);
+  if (end === null) { box.innerHTML = '<span class="err">終了日を入れてください。</span>'; return; }
+  if (end < start) { box.innerHTML = '<span class="err">終了日が開始日より前になっています。</span>'; return; }
+  var days = countDays(start, end, inc);
+  out.push(fmt(start) + " 〜 " + fmt(end) + "(初日を" + (inc ? "含む" : "含まない") + "):<b>" + days + "日間</b>");
+  out.push('<span class="note">計算:終了日 − 開始日 = ' + (days - (inc ? 1 : 0)) + (inc ? " ＋ 1(初日)" : "") + " = " + days + "日</span>");
+
+  var r = range(start, end, inc);
+  if ($("biz").checked) {
+    var bd = businessDays(r.first, r.last);
+    out.push("営業日数(土日" + (bd.outOfRange ? "のみ" : "・祝日") + "を除く):<b>" + bd.count + "日</b>" + (bd.outOfRange ? "" : "(うち祝日で除いた平日 " + bd.holidayCountExcluded + "日)"));
+    if (bd.outOfRange) out.push('<div class="warn">祝日は反映されません(土日のみ除外)。内蔵している祝日は2026年・2027年分だけです。</div>');
+  }
+
+  var mv = $("monthly").value;
+  if (mv !== "") {
+    var monthly = Number(mv);
+    if (!isFinite(monthly) || monthly < 0 || Math.floor(monthly) !== monthly || monthly > 1000000000) {
+      out.push('<span class="err">月額は0以上の整数(円)で入れてください。</span>');
+    } else if (days === 0) {
+      out.push("対象日数が0日なので、日割り額は0円です。");
+    } else {
+      var rm = $("rounding").value, b = breakdown(r.first, r.last, monthly, rm);
+      out.push("<b>日割り額(端数は" + ROUND_LABEL[rm] + ")</b>");
+      out.push("方式A(その月の実日数で割る):<b>" + yen(b.totalA) + "</b>");
+      out.push("方式B(月額×12÷365):<b>" + yen(b.totalB) + "</b>");
+      out.push('<span class="note">方式Bの計算:' + monthly.toLocaleString("ja-JP") + " × 12 × " + b.days + " ÷ 365</span>");
+      var h = '<table><tr><th>月</th><th>対象日数</th><th>その月の日数</th><th>計算</th><th>方式Aの金額</th></tr>';
+      b.rows.forEach(function (x) {
+        h += "<tr><td>" + x.y + "年" + x.m + "月</td><td>" + x.days + "日</td><td>" + x.dim + "日</td><td>" + monthly.toLocaleString("ja-JP") + " × " + x.days + " ÷ " + x.dim + "</td><td>" + yen(x.amount) + "</td></tr>";
+      });
+      out.push(h + "</table>");
+      if (b.rows.length > 1) out.push('<span class="note">月ごとに端数処理した金額を合計しています。合計してから端数処理する契約では、1円ほど違うことがあります。</span>');
+    }
+  }
+  box.innerHTML = out.join("<br>");
+}
+
+$("hcheck").textContent = HOLIDAYS_CHECKED_AT;
+$("hsrc").href = HOLIDAYS_SOURCE;
+$("hsrc").textContent = "内閣府「国民の祝日について」";
+["start", "end", "n", "inc", "monthly", "rounding", "biz"].forEach(function (id) { $(id).addEventListener("input", update); });
+Array.prototype.forEach.call(document.getElementsByName("mode"), function (el) { el.addEventListener("change", update); });
+update();
+</script>
+</body>
+</html>
