@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>動画・画像サイズ早見と縦横比の計算</title>
+<meta name="description" content="元の動画・画像の幅×高さから縦横比を約分し、縮小後のサイズ(動画向けに偶数へ丸め)と、目標の比率に合わせる時の切り取り・余白のサイズを計算します。入力内容は送信されません。">
+<style>
+  body { font-family: -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif; max-width: 760px; margin: 0 auto; padding: 16px; line-height: 1.8; color: #222; }
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.15rem; margin-top: 2rem; border-left: 4px solid #4a7; padding-left: 8px; }
+  fieldset { border: 1px solid #ccc; border-radius: 6px; margin: 12px 0; }
+  label { display: inline-block; margin: 4px 12px 4px 0; }
+  input[type=number] { width: 7em; padding: 4px; font-size: 1rem; }
+  #result { background: #f3f8f4; border-radius: 6px; padding: 12px; margin-top: 12px; min-height: 2em; }
+  #result .err { color: #b00; }
+  table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+  th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
+  .note { font-size: .85rem; color: #555; }
+  .empty { background: #fff8e1; border: 1px dashed #c90; padding: 8px; border-radius: 6px; }
+  footer { margin-top: 3rem; font-size: .8rem; color: #666; border-top: 1px solid #ddd; padding-top: 8px; }
+</style>
+</head>
+<body>
+<h1>動画・画像サイズ早見と縦横比の計算</h1>
+<p>元の幅×高さを入れると、縦横比(約分)、縮小後のサイズ、目標の比率に合わせる時の切り取り・余白のサイズが出ます。計算はこのページの中だけで行い、入力した数字はどこにも送られません。</p>
+
+<h2>計算する</h2>
+<fieldset>
+  <legend>① 元のサイズ(px)</legend>
+  <label>幅 <input type="number" id="w" min="1" step="1" value="1920"></label>
+  <label>高さ <input type="number" id="h" min="1" step="1" value="1080"></label>
+</fieldset>
+<fieldset>
+  <legend>② 縮小後のサイズ(どちらか片方でOK)</legend>
+  <label>縮小後の幅 <input type="number" id="nw" min="1" step="1" value="1280"></label>
+  <label>縮小後の高さ <input type="number" id="nh" min="1" step="1" placeholder="空欄でOK"></label>
+  <div class="note">両方入れた時は幅を優先します。動画は幅・高さが偶数でないと書き出せないことが多いため、縮小後のサイズと「余白を足す場合」のサイズは偶数に丸めます(「切り取る場合」は丸めません)。</div>
+</fieldset>
+<fieldset>
+  <legend>③ 目標の比率(任意)</legend>
+  <label><input type="number" id="tw" min="1" step="1" value="9" style="width:4em"> :
+  <input type="number" id="th" min="1" step="1" value="16" style="width:4em"></label>
+  <div class="note">縦動画なら 9 : 16 。空欄にすると、この項目は計算しません。</div>
+</fieldset>
+<div id="result" aria-live="polite"></div>
+
+<h2>プラットフォーム別の推奨サイズ表</h2>
+<div id="tableArea"></div>
+<p style="font-size:.85rem;color:#555">表は各社の公式ヘルプで確認できた値だけを載せています(確認日を表示)。TikTokは広告用の仕様です。TikTok の通常投稿など、公式で確認できていない項目は載せていません。仕様は変わるため、投稿前に公式の最新情報を確認してください。</p>
+<p class="note">推奨サイズは各サービスが変更することがあります。最終的な仕様は各サービスの公式ヘルプを優先してください。</p>
+
+<h2>使い方</h2>
+<ol>
+  <li>①に、いま手元にある動画・画像の幅と高さ(px)を入れます。書き出し画面やファイルのプロパティで確認できます。</li>
+  <li>縮小したい時は②に、縮小後の幅か高さのどちらかを入れます。もう片方は元の縦横比を保つように計算されます。</li>
+  <li>投稿先の比率に合わせたい時は③に比率を入れます。「切り取る場合」と「余白を足す場合」の2通りのサイズが出るので、見せたい部分が切れないか考えて選びます。</li>
+</ol>
+
+<h2>縦動画の基本の比率</h2>
+<p>スマホを縦に持った画面いっぱいに映す縦動画は、幅:高さが 9:16 の画面が基本になります。1080×1920 は約分すると 9:16 になるので、この比率の代表的なサイズです。横向きの 16:9(例:1920×1080)を縦の 9:16 に当てはめる時は、横に広い映像を縦長の枠に入れることになるので、左右を大きく切り取るか、上下に大きな余白を作るかのどちらかが必要です。この道具の③がその差を数字で出します。ただし、どの投稿先が何を推奨しているかは変わることがあるので、上の表(公式で確認できたものだけを載せます)と各公式ヘルプで確かめてください。</p>
+
+<h2>黒帯が出る理由</h2>
+<p>映像と表示枠の縦横比が違うと、どちらかが余ります。映像を枠に「全部見えるように」入れると、余った方向に黒い帯(余白)が出ます。逆に枠を「隙間なく埋める」ように拡大すると、はみ出した部分が切り取られます。黒帯は不具合ではなく、比率の違いを「全部見せる」か「埋める」かで解消した結果です。避けたい時は、撮影・編集の段階から最終的な投稿先の比率で作るのが確実です。</p>
+
+<h2>よくある間違い</h2>
+<ul>
+  <li><b>幅だけ、高さだけを変えてしまう</b>:片方だけ変えると映像が伸びたり潰れたりします。縮小は縦横比を保って行います。</li>
+  <li><b>奇数のサイズで書き出す</b>:動画の形式によっては幅・高さが偶数でないとエラーになります。この道具は偶数に丸めます(丸めた分だけ比率はごくわずかにずれます)。</li>
+  <li><b>「画素数が多い=高画質」と思う</b>:大きく引き伸ばしても元の情報量は増えません。元より大きなサイズに拡大するのは基本的に避けます。</li>
+  <li><b>見た目の比率を暗算で決める</b>:1920×1080 と 1280×720 はどちらも 16:9 ですが、1366×768 は約分しても 683:384 で、ぴったりの 16:9 ではありません。約分した数字で確認しましょう。</li>
+  <li><b>文字や顔を端に置く</b>:切り取りの可能性がある時は、重要な要素を中央寄りに置きます。</li>
+</ul>
+
+<footer>
+  サイズ早見ツール運営 ／ <a href="about.html">運営者情報・プライバシー</a> ／ このページは入力内容の収集・送信、アクセス解析、Cookieの利用を行いません。計算結果は目安です。
+</footer>
+
+<script src="calc.js"></script>
+<script>
+// 推奨サイズ表。公式ヘルプで確認できた値だけをここに追加する。
+// 1件の形:{ platform:"…", use:"…", size:"…", ratio:"…", checkedAt:"YYYY/MM/DD", source:"公式ヘルプのURL" }
+// 2026/10/04: YouTube・TikTok広告は公式ヘルプで確認。Instagramリールは2026/10/04に公式ページで確認。TikTok通常投稿は未確認のため載せていない。
+var SPEC_ROWS = [
+  { platform:"Instagram", use:"リール動画", size:"アップロード可能な比率の範囲(解像度は720px以上、30fps以上が必要)", ratio:"1.91:1 〜 9:16", checkedAt:"2026/10/04", source:"https://help.instagram.com/1038071743007909" },
+  { platform:"Instagram", use:"リールのカバー写真", size:"420×654 px(推奨)", ratio:"1:1.55", checkedAt:"2026/10/04", source:"https://help.instagram.com/1038071743007909" },
+  { platform:"YouTube", use:"通常の動画", size:"1280×720 以上(広告ありなし共通の推奨)", ratio:"16:9", checkedAt:"2026/10/04", source:"https://support.google.com/youtube/answer/4603579?hl=ja" },
+  { platform:"YouTube", use:"通常の動画(アップロード時)", size:"縦向き・正方形も可(プレーヤーが動画の大きさに合わせて変わる)", ratio:"16:9(標準)", checkedAt:"2026/10/04", source:"https://support.google.com/youtube/answer/1722171?hl=ja" },
+  { platform:"YouTube ショート", use:"ショート動画", size:"長さ 最長3分", ratio:"正方形または縦長", checkedAt:"2026/10/04", source:"https://support.google.com/youtube/answer/15424877?hl=ja" },
+  { platform:"TikTok(広告)", use:"In-Feed広告(Spark Adsを除く)・縦", size:"540×960 以上", ratio:"9:16", checkedAt:"2026/10/04", source:"https://ads.tiktok.com/help/article/video-ads-specifications?lang=ja" },
+  { platform:"TikTok(広告)", use:"In-Feed広告(Spark Adsを除く)・横", size:"960×540 以上", ratio:"16:9", checkedAt:"2026/10/04", source:"https://ads.tiktok.com/help/article/video-ads-specifications?lang=ja" },
+  { platform:"TikTok(広告)", use:"In-Feed広告(Spark Adsを除く)・正方形", size:"640×640 以上", ratio:"1:1", checkedAt:"2026/10/04", source:"https://ads.tiktok.com/help/article/video-ads-specifications?lang=ja" }
+];
+
+function renderTable() {
+  var area = document.getElementById("tableArea");
+  if (SPEC_ROWS.length === 0) {
+    area.innerHTML = '<div class="empty">公式で確認後に追記します(現在、確認済みの項目はありません)。</div>';
+    return;
+  }
+  var h = "<table><tr><th>サービス</th><th>用途</th><th>推奨サイズ</th><th>比率</th><th>確認日</th><th>出典</th></tr>";
+  SPEC_ROWS.forEach(function (r) {
+    var src = /^https:\/\//.test(r.source) ? '<a href="' + encodeURI(r.source) + '" rel="noopener">公式</a>' : "";
+    h += "<tr><td>" + esc(r.platform) + "</td><td>" + esc(r.use) + "</td><td>" + esc(r.size) + "</td><td>" + esc(r.ratio) + "</td><td>" + esc(r.checkedAt) + "</td><td>" + src + "</td></tr>";
+  });
+  area.innerHTML = h + "</table>";
+}
+function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+
+function num(id) {
+  var v = document.getElementById(id).value;
+  if (v === "") return null;
+  var n = Number(v);
+  return (isFinite(n) && n > 0 && Math.floor(n) === n) ? n : NaN;
+}
+
+function update() {
+  var out = [], w = num("w"), h = num("h"), nw = num("nw"), nh = num("nh"), tw = num("tw"), th = num("th");
+  var box = document.getElementById("result");
+  if (!w || !h) { box.innerHTML = '<span class="err">元の幅と高さを、1以上の整数で入れてください。</span>'; return; }
+  var r = ratio(w, h);
+  out.push("縦横比:<b>" + r.w + " : " + r.h + "</b>(" + w + "×" + h + ")");
+  if (Number.isNaN(nw) || Number.isNaN(nh)) {
+    out.push('<span class="err">縮小後のサイズは1以上の整数で入れてください。</span>');
+  } else if (nw || nh) {
+    var s = nw ? scale(w, h, nw, null) : scale(w, h, null, nh);
+    out.push("縮小後(偶数に丸め):<b>" + s.w + "×" + s.h + "</b>");
+    var exact = nw ? "高さ " + (Math.round(s.exactH * 100) / 100) : "幅 " + (Math.round(s.exactW * 100) / 100);
+    out.push('<span class="note">丸める前の' + exact + '。計算:新しい' + (nw ? "幅×元の高さ÷元の幅" : "高さ×元の幅÷元の高さ") + "</span>");
+    if ((nw && nw > w) || (nh && nh > h)) out.push('<span class="note">※元より大きいサイズです。拡大しても画質は上がりません。</span>');
+  }
+  if (Number.isNaN(tw) || Number.isNaN(th) || (!!tw !== !!th)) {
+    if (tw || th || Number.isNaN(tw) || Number.isNaN(th)) out.push('<span class="err">目標の比率は、両方を1以上の整数で入れてください。</span>');
+  } else if (tw && th) {
+    var f = fit(w, h, tw, th);
+    if (f.kind === "same") out.push("目標の比率 " + tw + ":" + th + " と同じです。切り取りも余白も不要です。");
+    else if (f.kind === "wider") out.push("目標 " + tw + ":" + th + " より横に広い映像です。<br>切り取る場合:左右を削って <b>" + f.cropTo.w + "×" + f.cropTo.h + "</b><br>余白を足す場合:上下に余白を足して <b>" + f.padTo.w + "×" + f.padTo.h + "</b>");
+    else out.push("目標 " + tw + ":" + th + " より縦に長い映像です。<br>切り取る場合:上下を削って <b>" + f.cropTo.w + "×" + f.cropTo.h + "</b><br>余白を足す場合:左右に余白を足して <b>" + f.padTo.w + "×" + f.padTo.h + "</b>");
+  }
+  box.innerHTML = out.join("<br>");
+}
+
+["w", "h", "nw", "nh", "tw", "th"].forEach(function (id) { document.getElementById(id).addEventListener("input", update); });
+renderTable();
+update();
+</script>
+</body>
+</html>
