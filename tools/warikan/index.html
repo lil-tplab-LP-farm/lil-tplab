@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5BJKLELCP4"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-5BJKLELCP4');
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>割り勘計算 端数 傾斜配分 幹事 100円単位</title>
+<meta name="description" content="割り勘の計算ツール。合計金額と人数から1人あたりを計算し、100円単位などの切り上げ・切り捨ての端数(余り・不足)も表示。多め・少なめの傾斜配分(最大10人)にも対応。入力内容は送信されません。">
+<style>
+  body { font-family: -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif; max-width: 760px; margin: 0 auto; padding: 16px; line-height: 1.8; color: #222; }
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.15rem; margin-top: 2rem; border-left: 4px solid #4a7; padding-left: 8px; }
+  fieldset { border: 1px solid #ccc; border-radius: 6px; margin: 12px 0; }
+  label { display: inline-block; margin: 4px 12px 4px 0; }
+  input[type=number] { width: 7em; padding: 4px; font-size: 1rem; }
+  select, button { padding: 4px; font-size: 1rem; }
+  textarea { width: 100%; box-sizing: border-box; min-height: 12em; padding: 8px; font-size: 1rem; font-family: inherit; }
+  #result { background: #f3f8f4; border-radius: 6px; padding: 12px; margin-top: 12px; min-height: 2em; }
+  #result .err { color: #b00; }
+  table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+  th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
+  td.num { text-align: right; }
+  .note { font-size: .85rem; color: #555; }
+  .empty { background: #fff8e1; border: 1px dashed #c90; padding: 8px; border-radius: 6px; }
+  footer { margin-top: 3rem; font-size: .8rem; color: #666; border-top: 1px solid #ddd; padding-top: 8px; }
+</style>
+</head>
+<body>
+<h1>割り勘の計算(端数の出し方・傾斜配分)</h1>
+<p>合計金額と人数を入れると、1人あたりの金額が出ます。100円単位などに切り上げ・切り捨てした時の端数(差額)も表示します。「多め・少なめ」の傾斜配分にも対応しています。計算はこのページの中だけで行い、入力した内容はどこにも送られません。</p>
+
+<h2>計算する</h2>
+<fieldset>
+  <legend>① 合計金額</legend>
+  <label>合計 <input type="number" id="total" min="0" step="1" value="23800"> 円</label>
+</fieldset>
+<fieldset>
+  <legend>② 端数の出し方</legend>
+  <label>金額の単位 <select id="unit">
+    <option value="1">1円(端数を丸めない)</option>
+    <option value="10">10円</option>
+    <option value="100" selected>100円</option>
+    <option value="500">500円</option>
+    <option value="1000">1,000円</option>
+  </select></label>
+  <label>丸め方 <select id="mode">
+    <option value="ceil" selected>切り上げ(足りなくならない)</option>
+    <option value="floor">切り捨て</option>
+    <option value="round">四捨五入</option>
+  </select></label>
+</fieldset>
+<fieldset>
+  <legend>③ 分け方</legend>
+  <label><input type="radio" name="kind" value="even" checked> みんな同じ額</label>
+  <label><input type="radio" name="kind" value="weighted"> 傾斜配分(多め・少なめ)</label>
+  <div id="evenBox">
+    <label>人数 <input type="number" id="n" min="1" max="1000" step="1" value="5"> 人</label>
+  </div>
+  <div id="weightedBox" hidden>
+    <div id="rows"></div>
+    <button type="button" id="addRow">人を追加</button> <button type="button" id="delRow">最後の人を削除</button>
+    <div class="note">最大10人。倍率は「普通」を1.0として、合計を倍率の比で分けます。</div>
+  </div>
+</fieldset>
+<div id="result" aria-live="polite"></div>
+
+<h2>使い方</h2>
+<ol>
+  <li>①に飲み会などの合計金額を入れます。</li>
+  <li>②で、集める金額の単位(100円単位など)と、丸め方を選びます。集金しやすい金額にしたい時は「切り上げ」にすると、集めた額が合計より足りなくなりません。</li>
+  <li>③で、みんな同じ額か、傾斜配分かを選びます。傾斜配分では、人ごとに倍率(多め×1.5・×1.2、普通×1.0、少なめ×0.8・×0.5)を選びます。</li>
+  <li>結果の「差額」を見て、端数をどうするか(幹事が持つ、誰かが少し多く払う、など)を決めます。</li>
+</ol>
+
+<h2>端数の出し方</h2>
+<p>合計を人数で割り切れない時や、100円単位にそろえる時は、端数が出ます。端数の扱い方は主に3通りです。</p>
+<ul>
+  <li><b>切り上げ</b>:1人あたりを多めにそろえます。集めた額が合計を上回り、<b>余り</b>が出ます。余りは幹事の手元に残るので、返すか、次回の会費に回すかを決めておくと揉めにくくなります。</li>
+  <li><b>切り捨て</b>:1人あたりを少なめにそろえます。集めた額が合計に届かず、<b>不足</b>が出ます。不足分は幹事が負担するか、誰か1人が多めに払います。</li>
+  <li><b>四捨五入</b>:近い方にそろえます。余りになるか不足になるかは、金額次第です。</li>
+</ul>
+<p>この道具は、どの場合も「差額 = 合計 − 集めた額の合計」を表示します。差額が正なら不足、負なら余りです。</p>
+
+<h2>傾斜配分の考え方</h2>
+<p>先輩や年長者は多め、あまり飲食しなかった人は少なめ、のように人ごとに倍率を決める方法です。1人あたりの金額は「合計 × その人の倍率 ÷ 全員の倍率の合計」で出し、そのあと端数を丸めます。丸めた結果、全員の合計は合計金額とぴったり一致しないことが多いので、差額も表示します。</p>
+<p>例:3人で30,000円、倍率が1.2・1.0・0.8の場合、倍率の合計は3.0なので、12,000円・10,000円・8,000円になります。</p>
+
+<h2>よくある間違い</h2>
+<ul>
+  <li><b>人数に自分(幹事)を入れ忘れる</b>:幹事も払う場合は、人数に含めます。</li>
+  <li><b>切り上げた金額を「ちょうど」と思う</b>:切り上げると集めた額は合計より多くなります。余りの扱いを先に決めておきましょう。</li>
+  <li><b>傾斜をつけた後で、合計を確認しない</b>:丸めの影響で合計が合わないことがあります。差額を必ず確認します。</li>
+  <li><b>1円単位の端数をそのまま集めようとする</b>:現金で集めるなら、100円単位など、お釣りが出ない単位にするのが現実的です。</li>
+</ul>
+
+<footer>
+  割り勘計算ツール運営 ／ <a href="about.html">運営者情報・プライバシー</a> ／ このページは入力内容の収集・送信を行いません。アクセス状況の把握にGoogle アナリティクスを使用しています(詳しくは運営者情報・プライバシー)。計算結果は目安です。
+</footer>
+
+<script src="calc.js"></script>
+<script>
+function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+function yen(n) { return n.toLocaleString("ja-JP") + "円"; }
+
+var KIND_OPTS = [["15", "多め ×1.5"], ["12", "やや多め ×1.2"], ["10", "普通 ×1.0"], ["8", "やや少なめ ×0.8"], ["5", "少なめ ×0.5"]];
+var MAX_ROWS = 10;
+var rowsEl = document.getElementById("rows");
+
+function addRow(val) {
+  if (rowsEl.children.length >= MAX_ROWS) return;
+  var i = rowsEl.children.length + 1;
+  var div = document.createElement("div");
+  var html = '<label>' + i + '人目 <select>';
+  KIND_OPTS.forEach(function (o) { html += '<option value="' + o[0] + '"' + (o[0] === (val || "10") ? " selected" : "") + ">" + o[1] + "</option>"; });
+  div.innerHTML = html + "</select></label>";
+  div.querySelector("select").addEventListener("change", update);
+  rowsEl.appendChild(div);
+}
+function delRow() { if (rowsEl.children.length > 1) rowsEl.removeChild(rowsEl.lastChild); }
+
+function intOrNull(id) {
+  var v = document.getElementById(id).value;
+  if (v === "") return null;
+  var n = Number(v);
+  return (isFinite(n) && Math.floor(n) === n) ? n : NaN;
+}
+function kind() { return document.querySelector('input[name="kind"]:checked').value; }
+
+function diffText(diff) {
+  if (diff === 0) return "集めた額と合計はちょうど合います。";
+  if (diff > 0) return '<b>不足 ' + yen(diff) + '</b>(合計 − 集めた額)。幹事が負担するか、誰か1人が多めに払うと合います。';
+  return '<b>余り ' + yen(-diff) + '</b>(集めた額 − 合計)。幹事の手元に残るので、返すか次回に回します。';
+}
+
+function update() {
+  var box = document.getElementById("result");
+  var total = intOrNull("total"), unit = Number(document.getElementById("unit").value), mode = document.getElementById("mode").value;
+  var weighted = kind() === "weighted";
+  document.getElementById("evenBox").hidden = weighted;
+  document.getElementById("weightedBox").hidden = !weighted;
+  if (total === null || Number.isNaN(total) || total < 0 || total > 1000000000) { box.innerHTML = '<span class="err">合計金額は、0以上10億以下の整数で入れてください。</span>'; return; }
+  var out = [];
+  if (!weighted) {
+    var n = intOrNull("n");
+    if (n === null || Number.isNaN(n) || n < 1 || n > 1000) { box.innerHTML = '<span class="err">人数は、1以上1000以下の整数で入れてください。</span>'; return; }
+    var r = splitEven(total, n, unit, mode);
+    out.push("1人あたり:<b>" + yen(r.per) + "</b>(" + n + "人)");
+    out.push("集めた額の合計:" + yen(r.collected) + " ／ 合計金額:" + yen(total));
+    out.push("差額:" + diffText(r.diff));
+    if (n >= 2 && r.diff !== 0) out.push('<span class="note">別の方法:' + (n - 1) + "人が" + yen(r.per) + "ずつ払い、残る1人が" + yen(r.lastPays) + "払うと、合計がちょうど合います。</span>");
+    if (unit === 1) out.push('<span class="note">1円単位の時は、割り切れない分だけ端数が出ます。</span>');
+  } else {
+    var ws = Array.prototype.map.call(rowsEl.querySelectorAll("select"), function (s) { return Number(s.value); });
+    var r2 = splitWeighted(total, ws, unit, mode);
+    var h = "<table><tr><th>人</th><th>倍率</th><th>金額</th></tr>";
+    r2.shares.forEach(function (s, i) { h += "<tr><td>" + (i + 1) + "人目</td><td class=\"num\">×" + (ws[i] / 10).toFixed(1) + "</td><td class=\"num\">" + yen(s) + "</td></tr>"; });
+    h += "</table>";
+    out.push(h);
+    out.push("集めた額の合計:" + yen(r2.collected) + " ／ 合計金額:" + yen(total));
+    out.push("差額:" + diffText(r2.diff));
+  }
+  box.innerHTML = out.join("<br>");
+}
+
+["total", "unit", "mode", "n"].forEach(function (id) { document.getElementById(id).addEventListener("input", update); });
+Array.prototype.forEach.call(document.querySelectorAll('input[name="kind"]'), function (e) { e.addEventListener("change", update); });
+document.getElementById("addRow").addEventListener("click", function () { addRow(); update(); });
+document.getElementById("delRow").addEventListener("click", function () { delRow(); update(); });
+["12", "10", "10", "8"].forEach(addRow);
+update();
+</script>
+</body>
+</html>

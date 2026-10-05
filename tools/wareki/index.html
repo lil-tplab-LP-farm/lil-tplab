@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5BJKLELCP4"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-5BJKLELCP4');
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>和暦 西暦 変換 令和 平成 昭和 早見 年齢 干支</title>
+<meta name="description" content="和暦(令和・平成・昭和・大正・明治)と西暦を相互に変換。改元の年(2019年=平成31年/令和元年など)は両方表示し、年月日からも変換できます。今年の年齢と干支も表示可。入力内容は送信されません。">
+<style>
+  body { font-family: -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif; max-width: 760px; margin: 0 auto; padding: 16px; line-height: 1.8; color: #222; }
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.15rem; margin-top: 2rem; border-left: 4px solid #4a7; padding-left: 8px; }
+  fieldset { border: 1px solid #ccc; border-radius: 6px; margin: 12px 0; }
+  label { display: inline-block; margin: 4px 12px 4px 0; }
+  input[type=number] { width: 7em; padding: 4px; font-size: 1rem; }
+  select, button { padding: 4px; font-size: 1rem; }
+  textarea { width: 100%; box-sizing: border-box; min-height: 12em; padding: 8px; font-size: 1rem; font-family: inherit; }
+  #result { background: #f3f8f4; border-radius: 6px; padding: 12px; margin-top: 12px; min-height: 2em; }
+  #result .err { color: #b00; }
+  table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+  th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
+  td.num { text-align: right; }
+  .note { font-size: .85rem; color: #555; }
+  .empty { background: #fff8e1; border: 1px dashed #c90; padding: 8px; border-radius: 6px; }
+  footer { margin-top: 3rem; font-size: .8rem; color: #666; border-top: 1px solid #ddd; padding-top: 8px; }
+</style>
+</head>
+<body>
+<h1>和暦⇄西暦の変換(令和・平成・昭和・大正・明治)</h1>
+<p>西暦から和暦、和暦から西暦に変換します。年月日を入れると、元号が替わる日(改元日)を正しく区別します。「今年の年齢」と干支も任意で出せます。計算はこのページの中だけで行い、入力した内容はどこにも送られません。</p>
+<p class="note">対象は、1873年(明治6年)1月1日以降です。明治5年以前は旧暦(月日が今の暦と違う)のため、対象外です。</p>
+
+<h2>変換する</h2>
+<fieldset>
+  <legend>① 西暦の年 → 和暦</legend>
+  <label>西暦 <input type="number" id="ay" min="1873" max="9999" step="1" value="2019"> 年</label>
+</fieldset>
+<fieldset>
+  <legend>② 和暦の年 → 西暦</legend>
+  <label><select id="be">
+    <option>令和</option><option selected>平成</option><option>昭和</option><option>大正</option><option>明治</option>
+  </select></label>
+  <label><input type="number" id="bn" min="1" step="1" value="31"> 年(元年は 1)</label>
+</fieldset>
+<fieldset>
+  <legend>③ 年月日 → 和暦</legend>
+  <label><input type="number" id="cy" min="1873" max="9999" step="1" value="2019" style="width:5em"> 年</label>
+  <label><input type="number" id="cm" min="1" max="12" step="1" value="4" style="width:4em"> 月</label>
+  <label><input type="number" id="cd" min="1" max="31" step="1" value="30" style="width:4em"> 日</label>
+</fieldset>
+<fieldset>
+  <legend>おまけ(任意)</legend>
+  <label><input type="checkbox" id="extra" checked> 今年の年齢と干支も表示する</label>
+  <div class="note">年齢は、お使いの端末の今日の日付をもとに計算します(日付は送信されません)。</div>
+</fieldset>
+<div id="result" aria-live="polite"></div>
+
+<h2>改元の境目</h2>
+<p>元号は年の途中で替わることがあるため、同じ西暦の年に、2つの元号が入る年があります。</p>
+<table>
+  <tr><th>西暦</th><th>前の元号</th><th>新しい元号</th></tr>
+  <tr><td>2019年</td><td>平成31年(1月1日〜4月30日)</td><td>令和元年(5月1日〜12月31日)</td></tr>
+  <tr><td>1989年</td><td>昭和64年(1月1日〜1月7日)</td><td>平成元年(1月8日〜12月31日)</td></tr>
+  <tr><td>1926年</td><td>大正15年(1月1日〜12月24日)</td><td>昭和元年(12月25日〜12月31日)</td></tr>
+  <tr><td>1912年</td><td>明治45年(1月1日〜7月29日)</td><td>大正元年(7月30日〜12月31日)</td></tr>
+</table>
+<p>年だけを入れた時は、これらの年は2つとも表示します。どちらになるかは月日で決まるので、年月日が分かる時は③を使ってください。</p>
+
+<h2>使い方</h2>
+<ol>
+  <li>西暦から和暦を知りたい時は①、和暦から西暦を知りたい時は②に入れます。</li>
+  <li>生年月日や契約日など、日付まで分かっている時は③に入れます。改元の年でも、正しい元号が出ます。</li>
+  <li>「今年の年齢と干支」をオンにすると、年齢と干支(えと)も一緒に出ます。年だけを入れた場合の年齢は、「今年中に迎える年齢」です。年月日(③)の場合は、今日時点の満年齢です。</li>
+</ol>
+
+<h2>年の数え方</h2>
+<p>和暦の年は、元号が始まった年を「元年」とし、その翌年を2年と数えます。西暦と和暦のずれは元号ごとに決まっています(令和 = 西暦 − 2018、平成 = 西暦 − 1988、昭和 = 西暦 − 1925、大正 = 西暦 − 1911、明治 = 西暦 − 1867)。ただし、改元の年は、改元の前か後かで元号が変わるため、この式がそのまま使えるのは、その元号の中の日付に限ります。</p>
+<p>明治は、元年が1868年です。1873年(明治6年)1月1日から、今と同じ太陽暦になりました。この道具は、その日以降を対象にしています。</p>
+
+<h2>干支について</h2>
+<p>干支は、西暦の年を10(十干)と12(十二支)で割った余りで決まります。この道具は、1月1日で年が替わる、年賀状などで一般的な数え方にしています。立春や旧暦の正月で替える流派とは、1〜2月の生まれで結果が違うことがあります。</p>
+
+<h2>よくある間違い</h2>
+<ul>
+  <li><b>改元の年を、年だけで決めてしまう</b>:2019年は平成31年にも令和元年にもなります。月日で決まります。</li>
+  <li><b>平成64年・昭和65年などを探してしまう</b>:昭和は64年までです(1989年1月7日まで)。存在しない年を入れると、エラーを表示します。</li>
+  <li><b>年齢を「今年 − 生まれ年」で出して、誕生日前の人も同じにする</b>:満年齢は、誕生日が来るまで1つ小さくなります。③に生年月日を入れると、今日時点の満年齢が出ます。</li>
+  <li><b>明治の年をずらす</b>:明治元年は1868年です。1873年は明治6年です。</li>
+</ul>
+
+<footer>
+  和暦西暦変換ツール運営 ／ <a href="about.html">運営者情報・プライバシー</a> ／ このページは入力内容の収集・送信を行いません。アクセス状況の把握にGoogle アナリティクスを使用しています(詳しくは運営者情報・プライバシー)。計算結果は目安です。
+</footer>
+
+<script src="calc.js"></script>
+<script>
+function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+
+var NOW = new Date(), NY = NOW.getFullYear(), NM = NOW.getMonth() + 1, ND = NOW.getDate();
+
+function intVal(id) {
+  var v = document.getElementById(id).value;
+  if (v === "") return NaN;
+  var n = Number(v);
+  return (isFinite(n) && Math.floor(n) === n) ? n : NaN;
+}
+function eraByName(name) { return ERAS.filter(function (e) { return e.name === name; })[0]; }
+function nextOf(name) { var i = ERAS.indexOf(eraByName(name)); return i > 0 ? ERAS[i - 1] : null; }
+function endDay(next) { // 次の元号が始まる前日
+  var t = new Date(Date.UTC(2000, 0, 1));
+  t.setUTCFullYear(next.y, next.m - 1, next.d - 1);
+  return (t.getUTCMonth() + 1) + "月" + t.getUTCDate() + "日";
+}
+function wlabel(r) { return r.era + yearLabel(r.year) + "年"; }
+function range(r) {
+  var parts = [];
+  if (r.partialStart) { var e = eraByName(r.era); parts.push(e.m + "月" + e.d + "日から"); }
+  if (r.partialEnd) parts.push(endDay(nextOf(r.era)) + "まで");
+  return parts.length ? "(この年の" + parts.join("") + ")" : "";
+}
+function etoText(y) { var e = eto(y); return "干支:" + e.kanshi + "(" + e.branch + "年)"; }
+function extraByYear(y) {
+  if (!document.getElementById("extra").checked) return "";
+  return '<br><span class="note">' + y + "年生まれの場合 — 今年(" + NY + "年)中に迎える年齢:" + ageByYear(y, NY) + "歳 ／ " + etoText(y) + "</span>";
+}
+function err(msg) { return '<span class="err">' + esc(msg) + "</span>"; }
+
+function update() {
+  var out = [];
+  // ① 西暦 → 和暦
+  var ay = intVal("ay");
+  var ra = Number.isNaN(ay) ? null : yearToWareki(ay);
+  if (!ra) out.push("<b>①</b> " + err("西暦は、1873以上9999以下の整数で入れてください(明治5年以前は対象外です)。"));
+  else out.push("<b>①</b> " + ay + "年 = <b>" + ra.map(function (r) { return wlabel(r); }).join(" / ") + "</b>" + (ra.length > 1 ? '<br><span class="note">改元の年です。' + ra.map(function (r) { return wlabel(r) + range(r); }).join("、") + "</span>" : "") + extraByYear(ay));
+  // ② 和暦 → 西暦
+  var bn = intVal("bn"), be = document.getElementById("be").value;
+  var rb = Number.isNaN(bn) ? null : warekiToYear(be, bn);
+  if (!rb) out.push("<b>②</b> " + err(be + (Number.isNaN(bn) ? "" : yearLabel(bn)) + "年は、この道具では変換できません。その元号にない年、または1873年(明治6年)より前です。"));
+  else out.push("<b>②</b> " + be + yearLabel(bn) + "年 = <b>" + rb.year + "年</b>" + (rb.partialStart || rb.partialEnd ? '<br><span class="note">改元の年です。' + wlabel({ era: be, year: bn }) + range({ era: be, partialStart: rb.partialStart, partialEnd: rb.partialEnd }) + "</span>" : "") + extraByYear(rb.year));
+  // ③ 年月日 → 和暦
+  var cy = intVal("cy"), cm = intVal("cm"), cd = intVal("cd");
+  var rc = (Number.isNaN(cy) || Number.isNaN(cm) || Number.isNaN(cd)) ? null : dateToWareki(cy, cm, cd);
+  if (!rc) out.push("<b>③</b> " + err("存在する日付を、1873年1月1日以降で入れてください。"));
+  else {
+    var line = "<b>③</b> " + cy + "年" + cm + "月" + cd + "日 = <b>" + wlabel(rc) + cm + "月" + cd + "日</b>";
+    if (document.getElementById("extra").checked) line += '<br><span class="note">この日に生まれた場合 — 今日時点の満年齢:' + ((key(cy, cm, cd) > key(NY, NM, ND)) ? "(未来の日付です)" : ageFull(cy, cm, cd, NY, NM, ND) + "歳") + " ／ " + etoText(cy) + "</span>";
+    out.push(line);
+  }
+  document.getElementById("result").innerHTML = out.join("<br><br>");
+}
+
+["ay", "be", "bn", "cy", "cm", "cd", "extra"].forEach(function (id) { document.getElementById(id).addEventListener("input", update); });
+update();
+</script>
+</body>
+</html>

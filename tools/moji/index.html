@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5BJKLELCP4"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-5BJKLELCP4');
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>文字数カウント 改行 空白 バイト数 原稿用紙 換算</title>
+<meta name="description" content="文章を貼るだけで、文字数(全部・空白除く・改行除く)、行数、UTF-8のバイト数、原稿用紙(400字詰め)の枚数を表示。絵文字・結合文字の数え方の注意つき。入力内容は送信されません。">
+<style>
+  body { font-family: -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif; max-width: 760px; margin: 0 auto; padding: 16px; line-height: 1.8; color: #222; }
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.15rem; margin-top: 2rem; border-left: 4px solid #4a7; padding-left: 8px; }
+  fieldset { border: 1px solid #ccc; border-radius: 6px; margin: 12px 0; }
+  label { display: inline-block; margin: 4px 12px 4px 0; }
+  input[type=number] { width: 7em; padding: 4px; font-size: 1rem; }
+  select, button { padding: 4px; font-size: 1rem; }
+  textarea { width: 100%; box-sizing: border-box; min-height: 12em; padding: 8px; font-size: 1rem; font-family: inherit; }
+  #result { background: #f3f8f4; border-radius: 6px; padding: 12px; margin-top: 12px; min-height: 2em; }
+  #result .err { color: #b00; }
+  table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+  th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
+  td.num { text-align: right; }
+  .note { font-size: .85rem; color: #555; }
+  .empty { background: #fff8e1; border: 1px dashed #c90; padding: 8px; border-radius: 6px; }
+  footer { margin-top: 3rem; font-size: .8rem; color: #666; border-top: 1px solid #ddd; padding-top: 8px; }
+</style>
+</head>
+<body>
+<h1>文字数カウント(改行・空白・バイト数・原稿用紙換算)</h1>
+<p>下の入力欄に文章を貼ると、文字数(全部・空白を除く・改行を除く)、行数、UTF-8のバイト数、原稿用紙(400字詰め)に直した枚数が出ます。数えるのはこのページの中だけで、貼った文章はどこにも送られません。</p>
+
+<h2>数える</h2>
+<textarea id="text" aria-label="文字数を数える文章" placeholder="ここに文章を貼り付けてください"></textarea>
+<div><button type="button" id="clear">入力欄を空にする</button></div>
+<div id="result" aria-live="polite"></div>
+
+<h2>使い方</h2>
+<ol>
+  <li>入力欄に、数えたい文章を貼り付けるか、直接入力します。入力するたびに結果が更新されます。</li>
+  <li>「文字数(全部)」は、スペースも改行も1文字として数えた数です。「空白を除く」は、スペース(半角・全角)・タブ・改行をすべて除いた数、「改行を除く」は、改行だけを除いた数です。</li>
+  <li>原稿用紙の換算は、2通り表示します。目安として使ってください。</li>
+</ol>
+
+<h2>「1文字」の数え方と、絵文字・結合文字の注意</h2>
+<p>この道具は、文字列を JavaScript の <code>Array.from</code> で1つずつに分けた数(Unicodeのコードポイントの数)を「1文字」として数えています。多くの日本語の文字・英数字・記号は、これで見た目どおりに数えられます。</p>
+<p>ただし、次のようなものは、見た目は1文字でも、2以上に数えられます。</p>
+<ul>
+  <li><b>家族・職業などの合成絵文字</b>(例:👨‍👩‍👧 は、人の絵文字3つを見えない結合用の文字でつないだもので、5と数えられます)</li>
+  <li><b>肌の色を変えた絵文字、国旗</b>(国旗は2つの記号の組み合わせです)</li>
+  <li><b>結合文字</b>(例:「e」の後に「´」を結合させた「é」は2と数えられます。1文字で書かれた「é」は1です)</li>
+  <li><b>目に見えない文字</b>(ゼロ幅スペースなど)は、見えなくても1文字として数えられます</li>
+</ul>
+<p>そのため、他のソフトやサービスの文字数とずれることがあります。数え方はサービスごとに違うので、文字数の制限があるものに投稿・応募する時は、そのサービス自身の表示で最終確認してください。この道具は、各サービスの文字数の上限は載せていません。</p>
+
+<h2>バイト数について</h2>
+<p>バイト数は、文字をUTF-8で保存した時の大きさです。半角の英数字は1バイト、ひらがな・漢字などの日本語の多くは3バイト、絵文字の多くは4バイトです。ファイルサイズやデータベースの文字数制限の目安に使えますが、文字コードがUTF-8以外(Shift_JISなど)の時は、バイト数が変わります。</p>
+
+<h2>原稿用紙の換算について</h2>
+<ul>
+  <li><b>単純換算</b>:改行を除いた文字数 ÷ 400 です(400字詰め=20字×20行)。</li>
+  <li><b>行頭から書く場合</b>:改行で区切った段落ごとに、行の先頭から書き始め、空行も1行使うものとして、20字で折り返した行数を数え、20行で1枚とします。</li>
+</ul>
+<p>どちらも簡易な計算です。実際の原稿用紙では、句読点や閉じかっこが行頭に来ない決まり(禁則処理)や、段落の字下げなどがあるため、枚数が変わることがあります。</p>
+
+<h2>よくある間違い</h2>
+<ul>
+  <li><b>「文字数」と「バイト数」を混同する</b>:日本語は1文字が複数バイトです。文字数の制限なのか、バイト数の制限なのかを確認します。</li>
+  <li><b>スペースや改行を含めるかを確認しない</b>:提出先によって、空白や改行を数える・数えないが違います。</li>
+  <li><b>見た目の文字数と一致すると思い込む</b>:絵文字や結合文字は、上のとおり数えられ方が違います。</li>
+  <li><b>改行コードの違い</b>:Windowsの改行(2文字分)も、この道具は1つの改行として扱います。</li>
+</ul>
+
+<footer>
+  文字数カウントツール運営 ／ <a href="about.html">運営者情報・プライバシー</a> ／ このページは入力内容の収集・送信を行いません。アクセス状況の把握にGoogle アナリティクスを使用しています(詳しくは運営者情報・プライバシー)。計算結果は目安です。
+</footer>
+
+<script src="calc.js"></script>
+<script>
+var el = document.getElementById("text"), box = document.getElementById("result");
+function n(x) { return x.toLocaleString("ja-JP"); }
+function row(label, value, note) { return "<tr><th>" + label + "</th><td class=\"num\">" + value + "</td><td>" + (note || "") + "</td></tr>"; }
+
+function update() {
+  var c = count(el.value);
+  var g = c.genko;
+  var h = "<table><tr><th>項目</th><th>数</th><th>説明</th></tr>";
+  h += row("文字数(全部)", n(c.all) + " 文字", "スペース・改行も1文字");
+  h += row("文字数(空白を除く)", n(c.noSpace) + " 文字", "スペース・全角スペース・タブ・改行を除く");
+  h += row("文字数(改行を除く)", n(c.noNewline) + " 文字", "改行だけを除く");
+  h += row("行数", n(c.lines) + " 行", "改行で区切った数(空なら0)");
+  h += row("バイト数(UTF-8)", n(c.bytes) + " バイト", "UTF-8で保存した時の大きさ");
+  h += row("原稿用紙(単純換算)", (Math.round(g.simple * 100) / 100).toFixed(2) + " 枚(切り上げ " + n(g.simpleSheets) + " 枚)", "改行を除く文字数 ÷ 400");
+  h += row("原稿用紙(行頭から)", n(g.rows) + " 行 → " + n(g.rowSheets) + " 枚", "段落ごとに行頭から。空行も1行。20字×20行");
+  h += "</table>";
+  box.innerHTML = h;
+}
+el.addEventListener("input", update);
+document.getElementById("clear").addEventListener("click", function () { el.value = ""; update(); el.focus(); });
+update();
+</script>
+</body>
+</html>
