@@ -6,3 +6,6 @@ index.bak_*
 # ローカルのClaude Codeセッションはgitの追跡有無に関わらずこのファイルを読み込めるので、
 # 除外しても動作上の支障はない。
 CLAUDE.md
+
+# 2026/10/05: 作業依頼(handoff)の控えは内部用。誤ってcommit/pushしない
+handoff_*.md
