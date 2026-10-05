@@ -2,6 +2,14 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5BJKLELCP4"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-5BJKLELCP4');
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>動画・画像サイズ早見と縦横比の計算</title>
 <meta name="description" content="元の動画・画像の幅×高さから縦横比を約分し、縮小後のサイズ(動画向けに偶数へ丸め)と、目標の比率に合わせる時の切り取り・余白のサイズを計算します。入力内容は送信されません。">
@@ -73,7 +81,7 @@
 </ul>
 
 <footer>
-  サイズ早見ツール運営 ／ <a href="about.html">運営者情報・プライバシー</a> ／ このページは入力内容の収集・送信、アクセス解析、Cookieの利用を行いません。計算結果は目安です。
+  サイズ早見ツール運営 ／ <a href="about.html">運営者情報・プライバシー</a> ／ このページは入力内容の収集・送信を行いません。アクセス状況の把握にGoogle アナリティクスを使用しています(詳しくは運営者情報・プライバシー)。計算結果は目安です。
 </footer>
 
 <script src="calc.js"></script>
