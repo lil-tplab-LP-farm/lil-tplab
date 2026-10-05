@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5BJKLELCP4"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-5BJKLELCP4');
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>消費税計算 税込 税抜 10% 8% 端数処理(切り捨て・四捨五入・切り上げ)</title>
+<meta name="description" content="消費税の計算ツール。税込→税抜、税抜→税込を税率10%・8%(軽減税率)で計算し、端数処理(切り捨て・四捨五入・切り上げ)を選べます。複数の品目を税率ごとに合計して1回端数処理。入力内容は送信されません。">
+<style>
+  body { font-family: -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif; max-width: 760px; margin: 0 auto; padding: 16px; line-height: 1.8; color: #222; }
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.15rem; margin-top: 2rem; border-left: 4px solid #4a7; padding-left: 8px; }
+  fieldset { border: 1px solid #ccc; border-radius: 6px; margin: 12px 0; }
+  label { display: inline-block; margin: 4px 12px 4px 0; }
+  input[type=number] { width: 9em; padding: 4px; font-size: 1rem; }
+  select { padding: 4px; font-size: 1rem; }
+  #result { background: #f3f8f4; border-radius: 6px; padding: 12px; margin-top: 12px; min-height: 2em; }
+  #result .err { color: #b00; }
+  table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+  th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
+  td.n, th.n { text-align: right; }
+  .note { font-size: .85rem; color: #555; }
+  .empty { background: #fff8e1; border: 1px dashed #c90; padding: 8px; border-radius: 6px; }
+  footer { margin-top: 3rem; font-size: .8rem; color: #666; border-top: 1px solid #ddd; padding-top: 8px; }
+</style>
+</head>
+<body>
+<h1>消費税の計算(税込⇄税抜・10%/8%・端数処理)</h1>
+<p>税込と税抜を行き来して計算します。税率は10%と8%(軽減税率)を選べ、端数は切り捨て・四捨五入・切り上げから選べます。品目を足すと、税率ごとに合計して1回だけ端数処理した結果が出ます。計算はこのページの中だけで行い、入力した金額はどこにも送られません。</p>
+
+<h2>計算する</h2>
+<fieldset>
+  <legend>① 入力する金額は</legend>
+  <label><input type="radio" name="basis" value="incl" checked> 税込の金額(税抜と消費税を知りたい)</label>
+  <label><input type="radio" name="basis" value="excl"> 税抜の金額(税込を知りたい)</label>
+</fieldset>
+<fieldset>
+  <legend>② 端数処理(消費税額の円未満)</legend>
+  <label><select id="mode"><option value="floor">切り捨て</option><option value="round">四捨五入</option><option value="ceil">切り上げ</option></select></label>
+</fieldset>
+<fieldset>
+  <legend>③ 品目(最大10行・金額は円の整数。空欄の行は無視します)</legend>
+  <div id="rows"></div>
+  <button type="button" id="add">品目を追加</button>
+</fieldset>
+<div id="result" aria-live="polite"></div>
+
+<h2>使い方</h2>
+<ol>
+  <li>①で、手元の金額が税込か税抜かを選びます。</li>
+  <li>②で、消費税額の端数をどう処理するかを選びます(請求先や社内の決まりに合わせます)。</li>
+  <li>③に金額と税率を入れます。1つだけ調べたい時は、1行目だけで足ります。請求書のように複数の品目がある時は、行を足します。</li>
+  <li>結果は税率ごとの合計と、全体の合計で出ます。「品目ごとに端数処理した場合」との差も参考に出します。</li>
+</ol>
+
+<h2>税込・税抜の計算式</h2>
+<ul>
+  <li>税抜→税込:消費税額 = 税抜 × 税率 ÷ 100(円未満を端数処理)、税込 = 税抜 + 消費税額</li>
+  <li>税込→税抜:消費税額 = 税込 × 税率 ÷ (100 + 税率)(円未満を端数処理)、税抜 = 税込 − 消費税額</li>
+</ul>
+<p>例:税込1,100円(10%)なら、消費税額は 1,100 × 10 ÷ 110 = 100円、税抜は1,000円です。</p>
+
+<h2>請求書の端数処理の考え方</h2>
+<p>複数の品目がある請求書では、品目ごとに端数処理して足すのではなく、税率ごとに合計してから1回だけ端数処理するのが原則とされています。品目ごとに処理すると、合計がずれることがあります。この道具の合計は、税率ごとに1回だけ端数処理した結果です。実際の取り扱いは目安として、詳細は国税庁の案内を確認してください。</p>
+
+<h2>よくある間違い</h2>
+<ul>
+  <li><b>税込から税抜を出す時に、×0.9 や ÷1.1 だけで済ませる</b>:端数の扱いで1円ずれることがあります。どちらの処理か決めてから計算します。</li>
+  <li><b>軽減税率(8%)と10%を混ぜて計算する</b>:税率ごとに分けて合計します。この道具は行ごとに税率を選べます。</li>
+  <li><b>品目ごとに端数処理して合計する</b>:請求書全体では、税率ごとの合計に対して処理するのが原則です。</li>
+  <li><b>税込の金額に、もう一度税をかける</b>:①の選択(税込か税抜か)を確認してください。</li>
+</ul>
+
+<footer>
+  消費税計算ツール運営 ／ <a href="about.html">運営者情報・プライバシー</a> ／ このページは入力内容の収集・送信を行いません。アクセス状況の把握にGoogle アナリティクスを使用しています(詳しくは運営者情報・プライバシー)。計算結果は目安です。
+</footer>
+
+<script src="calc.js"></script>
+<script>
+var MAX_ROWS = 10, shown = 1;
+
+function buildRows() {
+  var box = document.getElementById("rows"), h = "";
+  for (var i = 0; i < MAX_ROWS; i++) {
+    h += '<div id="row' + i + '"' + (i >= shown ? ' style="display:none"' : "") + '>' +
+      '<label>品目' + (i + 1) + ' 金額(円) <input type="number" id="amt' + i + '" min="0" step="1"' + (i === 0 ? ' value="1100"' : "") + '></label>' +
+      '<label>税率 <select id="rate' + i + '"><option value="10">10%</option><option value="8">8%(軽減)</option></select></label></div>';
+  }
+  box.innerHTML = h;
+  for (var j = 0; j < MAX_ROWS; j++) {
+    document.getElementById("amt" + j).addEventListener("input", update);
+    document.getElementById("rate" + j).addEventListener("change", update);
+  }
+}
+
+function yen(n) { return n.toLocaleString("ja-JP") + "円"; }
+
+function update() {
+  var box = document.getElementById("result");
+  var basis = document.querySelector('input[name=basis]:checked').value;
+  var mode = document.getElementById("mode").value;
+  var items = [], bad = false;
+  for (var i = 0; i < shown; i++) {
+    var v = document.getElementById("amt" + i).value;
+    if (v === "") continue;
+    var n = Number(v);
+    if (!(isFinite(n) && n >= 0 && Math.floor(n) === n && n <= 1e12)) { bad = true; continue; }
+    items.push({ amount: n, rate: Number(document.getElementById("rate" + i).value) });
+  }
+  if (bad) { box.innerHTML = '<span class="err">金額は、0以上1兆以下の整数(円)で入れてください。</span>'; return; }
+  if (items.length === 0) { box.innerHTML = "金額を入れると、ここに結果が出ます。"; return; }
+  var r = calcItems(items, basis, mode);
+  var h = "<table><tr><th>税率</th><th class='n'>税抜</th><th class='n'>消費税額</th><th class='n'>税込</th></tr>";
+  [10, 8].forEach(function (rate) {
+    var g = r.groups[rate];
+    if (g) h += "<tr><td>" + rate + "%" + (rate === 8 ? "(軽減)" : "") + "</td><td class='n'>" + yen(g.excl) + "</td><td class='n'>" + yen(g.tax) + "</td><td class='n'>" + yen(g.incl) + "</td></tr>";
+  });
+  h += "<tr><td><b>合計</b></td><td class='n'><b>" + yen(r.total.excl) + "</b></td><td class='n'><b>" + yen(r.total.tax) + "</b></td><td class='n'><b>" + yen(r.total.incl) + "</b></td></tr></table>";
+  h += '<div class="note">税率ごとに合計して1回だけ端数処理した結果です。</div>';
+  if (items.length > 1 && r.perItemTax !== r.total.tax) {
+    h += '<div class="note">参考:品目ごとに端数処理して足すと、消費税額の合計は ' + yen(r.perItemTax) + ' になり、' + yen(Math.abs(r.perItemTax - r.total.tax)) + '違います。</div>';
+  }
+  box.innerHTML = h;
+}
+
+document.getElementById("add").addEventListener("click", function () {
+  if (shown < MAX_ROWS) {
+    document.getElementById("row" + shown).style.display = "";
+    shown++;
+  }
+  if (shown >= MAX_ROWS) this.disabled = true;
+  update();
+});
+document.getElementById("mode").addEventListener("change", update);
+Array.prototype.forEach.call(document.querySelectorAll("input[name=basis]"), function (el) { el.addEventListener("change", update); });
+buildRows();
+update();
+</script>
+</body>
+</html>

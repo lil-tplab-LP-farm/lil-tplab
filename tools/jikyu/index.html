@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5BJKLELCP4"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-5BJKLELCP4');
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>時給 月給 年収 換算 計算(年間休日・賞与の入力対応)</title>
+<meta name="description" content="時給から月給・年収、月給から時給・年収、年収から時給・月給を換算します。1日の労働時間・週の労働日数・年間休日・賞与を入力で変更できます。額面の換算のみで、入力内容は送信されません。">
+<style>
+  body { font-family: -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif; max-width: 760px; margin: 0 auto; padding: 16px; line-height: 1.8; color: #222; }
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.15rem; margin-top: 2rem; border-left: 4px solid #4a7; padding-left: 8px; }
+  fieldset { border: 1px solid #ccc; border-radius: 6px; margin: 12px 0; }
+  label { display: inline-block; margin: 4px 12px 4px 0; }
+  input[type=number] { width: 8em; padding: 4px; font-size: 1rem; }
+  select { padding: 4px; font-size: 1rem; }
+  #result { background: #f3f8f4; border-radius: 6px; padding: 12px; margin-top: 12px; min-height: 2em; }
+  #result .err { color: #b00; }
+  table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+  th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
+  td.n, th.n { text-align: right; }
+  .note { font-size: .85rem; color: #555; }
+  .empty { background: #fff8e1; border: 1px dashed #c90; padding: 8px; border-radius: 6px; }
+  footer { margin-top: 3rem; font-size: .8rem; color: #666; border-top: 1px solid #ddd; padding-top: 8px; }
+</style>
+</head>
+<body>
+<h1>時給・月給・年収の換算</h1>
+<p>時給・月給・年収のどれかを入れると、残りの2つが出ます。1日の労働時間、週の労働日数、年間の休日数、賞与も入力で変えられます。計算は額面(税や社会保険料を引く前の金額)の換算だけで、手取りは計算しません。入力した内容はどこにも送られません。</p>
+
+<h2>計算する</h2>
+<fieldset>
+  <legend>① 分かっている金額</legend>
+  <label><select id="from"><option value="hourly">時給</option><option value="monthly">月給(賞与を除く)</option><option value="annual">年収(賞与を含む)</option></select></label>
+  <label>金額(円) <input type="number" id="value" min="0" step="any" value="1500"></label>
+</fieldset>
+<fieldset>
+  <legend>② 働き方</legend>
+  <label>1日の労働時間(時間) <input type="number" id="hours" min="0.25" max="24" step="any" value="8" style="width:5em"></label>
+  <label>週の労働日数(日) <input type="number" id="wdays" min="1" max="7" step="1" value="5" style="width:5em"></label>
+  <label>年間休日(日) <input type="number" id="hol" min="0" max="364" step="1" value="120" style="width:5em"></label>
+  <div class="note">年間の労働日数は「365日 − 年間休日」で数えます(初期値は 245日 = 365 − 120)。週の労働日数は、週あたりの時間・金額の表示に使います。</div>
+</fieldset>
+<fieldset>
+  <legend>③ 賞与(任意)</legend>
+  <label><select id="btype"><option value="months">月給の何か月分</option><option value="amount">年間の金額(円)</option></select></label>
+  <label><input type="number" id="bvalue" min="0" step="any" placeholder="空欄で賞与なし" style="width:9em"></label>
+</fieldset>
+<div id="result" aria-live="polite"></div>
+
+<h2>使い方</h2>
+<ol>
+  <li>①で、手元にある金額の種類(時給・月給・年収)を選んで、金額を入れます。</li>
+  <li>②に、実際の1日の労働時間と年間休日を入れます。求人票の「年間休日」の数字がそのまま使えます。</li>
+  <li>賞与がある時だけ③に入れます。月給の○か月分、または年間の金額のどちらでも指定できます。</li>
+  <li>年収から時給を出す時は、賞与を含む金額を①に入れ、賞与を③に入れてください。賞与が空欄なら、年収を全部月給分として割ります。</li>
+</ol>
+
+<h2>換算の式</h2>
+<ul>
+  <li>年間の労働時間 = (365 − 年間休日) × 1日の労働時間</li>
+  <li>賞与を除く年収 = 時給 × 年間の労働時間 = 月給 × 12</li>
+  <li>年収(賞与を含む)= 賞与を除く年収 + 賞与</li>
+</ul>
+<p>例:時給1,500円、8時間、年間休日120日なら、年間の労働時間は 245日 × 8時間 = 1,960時間で、賞与を除く年収は 2,940,000円、月給は 245,000円です。</p>
+
+<h2>よくある間違い</h2>
+<ul>
+  <li><b>月給を「÷ 20日 ÷ 8時間」のように月の日数で割る</b>:月ごとの日数は変わるので、年間の労働時間で割る方がぶれません。</li>
+  <li><b>年間休日を入れずに計算する</b>:休日が違うと、同じ月給でも時給は変わります。</li>
+  <li><b>賞与を含めた年収を、そのまま12で割って月給にする</b>:賞与がある時は、月給と賞与を分けて考えます。</li>
+  <li><b>額面と手取りを混ぜる</b>:ここで出るのは額面です。手取りは税や社会保険料で変わります。</li>
+</ul>
+
+<footer>
+  時給・月給・年収換算ツール運営 ／ <a href="about.html">運営者情報・プライバシー</a> ／ このページは入力内容の収集・送信を行いません。アクセス状況の把握にGoogle アナリティクスを使用しています(詳しくは運営者情報・プライバシー)。計算結果は目安です。
+</footer>
+
+<script src="calc.js"></script>
+<script>
+function numOrNull(id) {
+  var v = document.getElementById(id).value;
+  if (v === "") return null;
+  var n = Number(v);
+  return isFinite(n) ? n : NaN;
+}
+function yen(n) { return Math.round(n).toLocaleString("ja-JP") + "円"; }
+
+function update() {
+  var box = document.getElementById("result");
+  var from = document.getElementById("from").value;
+  var value = numOrNull("value"), hours = numOrNull("hours"), wdays = numOrNull("wdays"), hol = numOrNull("hol"), bv = numOrNull("bvalue");
+  var err = null;
+  if (!(value > 0)) err = "金額は、0より大きい数で入れてください。";
+  else if (!(hours > 0 && hours <= 24)) err = "1日の労働時間は、0より大きく24以下で入れてください。";
+  else if (!(wdays >= 1 && wdays <= 7 && Math.floor(wdays) === wdays)) err = "週の労働日数は、1〜7の整数で入れてください。";
+  else if (!(hol >= 0 && hol <= 364 && Math.floor(hol) === hol)) err = "年間休日は、0〜364の整数で入れてください。";
+  else if (bv !== null && !(bv >= 0)) err = "賞与は、0以上の数で入れてください。";
+  if (err) { box.innerHTML = '<span class="err">' + err + "</span>"; return; }
+  var type = document.getElementById("btype").value;
+  var r = convert(from, value, hours, hol, { type: type, value: bv === null ? 0 : bv });
+  if (!r) { box.innerHTML = '<span class="err">賞与が年収より大きいため、計算できません。</span>'; return; }
+  var weekHours = wdays * hours;
+  var h = "<table>" +
+    "<tr><th>項目</th><th class='n'>金額</th></tr>" +
+    "<tr><td>時給</td><td class='n'><b>" + yen(r.hourly) + "</b></td></tr>" +
+    "<tr><td>月給(賞与を除く)</td><td class='n'><b>" + yen(r.monthly) + "</b></td></tr>" +
+    "<tr><td>賞与を除く年収</td><td class='n'>" + yen(r.base) + "</td></tr>" +
+    "<tr><td>賞与</td><td class='n'>" + yen(r.bonus) + "</td></tr>" +
+    "<tr><td>年収(賞与を含む)</td><td class='n'><b>" + yen(r.annual) + "</b></td></tr>" +
+    "<tr><td>週の金額(週" + wdays + "日・" + weekHours + "時間)</td><td class='n'>" + yen(r.hourly * weekHours) + "</td></tr>" +
+    "</table>" +
+    '<div class="note">年間の労働日数 ' + r.daysYear + '日、年間の労働時間 ' + (Math.round(r.hoursYear * 100) / 100) + '時間で計算しています。額面の換算です。手取りではありません。</div>';
+  if (wdays * 52 !== r.daysYear) {
+    h += '<div class="note">参考:週' + wdays + '日 × 52週 = ' + (wdays * 52) + '日で、年間休日から数えた ' + r.daysYear + '日とは違います。年間の計算は年間休日を基準にしています。</div>';
+  }
+  box.innerHTML = h;
+}
+
+["from", "value", "hours", "wdays", "hol", "btype", "bvalue"].forEach(function (id) {
+  var el = document.getElementById(id);
+  el.addEventListener("input", update);
+  el.addEventListener("change", update);
+});
+update();
+</script>
+</body>
+</html>

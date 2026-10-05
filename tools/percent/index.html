@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5BJKLELCP4"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-5BJKLELCP4');
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>割引計算 パーセント計算 割増 何%引き 2段階割引</title>
+<meta name="description" content="パーセントの計算ツール。Aの何%はいくつ、AはBの何%、X%引き・X%増しの金額、20%引きの後さらに10%引きなど2段階割引の合計割引率を計算します。入力内容は送信されません。">
+<style>
+  body { font-family: -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif; max-width: 760px; margin: 0 auto; padding: 16px; line-height: 1.8; color: #222; }
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.15rem; margin-top: 2rem; border-left: 4px solid #4a7; padding-left: 8px; }
+  fieldset { border: 1px solid #ccc; border-radius: 6px; margin: 12px 0; }
+  label { display: inline-block; margin: 4px 12px 4px 0; }
+  input[type=number] { width: 8em; padding: 4px; font-size: 1rem; }
+  select { padding: 4px; font-size: 1rem; }
+  .result { background: #f3f8f4; border-radius: 6px; padding: 8px 12px; margin-top: 8px; min-height: 1.8em; }
+  .result .err { color: #b00; }
+  .note { font-size: .85rem; color: #555; }
+  .empty { background: #fff8e1; border: 1px dashed #c90; padding: 8px; border-radius: 6px; }
+  footer { margin-top: 3rem; font-size: .8rem; color: #666; border-top: 1px solid #ddd; padding-top: 8px; }
+</style>
+</head>
+<body>
+<h1>割引・割増・パーセントの計算</h1>
+<p>「Aの何%はいくつ」「AはBの何%」「X%引き・X%増しの金額」「2段階割引」を計算します。数字を入れるとすぐに結果が出ます。計算はこのページの中だけで行い、入力した数字はどこにも送られません。</p>
+
+<h2>① Aの何%はいくつ</h2>
+<fieldset>
+  <label>A <input type="number" id="a1" step="any" value="8000"></label>
+  <label>の <input type="number" id="p1" step="any" value="15" style="width:6em"> %</label>
+  <div class="result" id="r1" aria-live="polite"></div>
+</fieldset>
+
+<h2>② AはBの何%</h2>
+<fieldset>
+  <label>A <input type="number" id="a2" step="any" value="30"></label>
+  <label>B <input type="number" id="b2" step="any" value="200"></label>
+  <div class="result" id="r2" aria-live="polite"></div>
+</fieldset>
+
+<h2>③ X%引き・X%増しの金額</h2>
+<fieldset>
+  <label>元の金額 <input type="number" id="a3" step="any" value="12000"></label>
+  <label><input type="number" id="p3" step="any" value="30" style="width:6em"> %</label>
+  <label><select id="k3"><option value="off">引き(割引)</option><option value="up">増し(割増)</option></select></label>
+  <div class="result" id="r3" aria-live="polite"></div>
+</fieldset>
+
+<h2>④ 2段階割引(○%引きの後、さらに○%引き)</h2>
+<fieldset>
+  <label>元の金額 <input type="number" id="a4" step="any" value="10000"></label>
+  <label>1回目 <input type="number" id="p4" step="any" value="20" style="width:6em"> %引き</label>
+  <label>その後さらに <input type="number" id="q4" step="any" value="10" style="width:6em"> %引き</label>
+  <div class="result" id="r4" aria-live="polite"></div>
+</fieldset>
+
+<h2>使い方</h2>
+<ol>
+  <li>知りたい計算の枠(①〜④)に数字を入れます。小数も入れられます。</li>
+  <li>①は「8,000円の15%はいくら」のような時、②は「200人のうち30人は何%」のような時に使います。</li>
+  <li>③は「12,000円の30%引き」や「12,000円の10%増し」の金額を出します。引かれた額・増えた額も出ます。</li>
+  <li>④は「20%引きの後、さらに10%引き」のように、割引が重なる時に使います。</li>
+</ol>
+
+<h2>2段階割引は足し算ではありません</h2>
+<p>「20%引きの後さらに10%引き」は、合計30%引きにはなりません。2回目の10%は、1回目の割引後の金額に対してかかるためです。10,000円なら、1回目で8,000円、2回目で7,200円になり、合計の割引率は28%です。式にすると、(100 − 20) × (100 − 10) ÷ 100 = 72 で、残りが72%、つまり28%引きです。④に数字を入れると、合計の割引率も出ます。</p>
+
+<h2>よくある間違い</h2>
+<ul>
+  <li><b>2つの割引率を足してしまう</b>:20%引きと10%引きが重なっても、30%引きにはなりません(上の説明のとおり)。</li>
+  <li><b>「30%引き」の後に「30%増し」で元に戻ると思う</b>:100円を30%引くと70円で、そこから30%増すと91円です。元の金額には戻りません。</li>
+  <li><b>「AはBの何%」の分母を間違える</b>:基準にする方(もとになる数)がBです。30は200の15%ですが、200は30の約667%です。</li>
+  <li><b>増えた割合と、減った割合を同じ数だと思う</b>:100から150に増えたら50%増しですが、150から100に戻る時は約33%減です。</li>
+</ul>
+
+<footer>
+  パーセント計算ツール運営 ／ <a href="about.html">運営者情報・プライバシー</a> ／ このページは入力内容の収集・送信を行いません。アクセス状況の把握にGoogle アナリティクスを使用しています(詳しくは運営者情報・プライバシー)。計算結果は目安です。
+</footer>
+
+<script src="calc.js"></script>
+<script>
+function numOrNull(id) {
+  var v = document.getElementById(id).value;
+  if (v === "") return null;
+  var n = Number(v);
+  return isFinite(n) ? n : NaN;
+}
+function fmt(x) { return round2(x).toLocaleString("ja-JP", { maximumFractionDigits: 2 }); }
+function ready(vals) { return vals.every(function (v) { return v !== null && !Number.isNaN(v); }); }
+function show(id, html) { document.getElementById(id).innerHTML = html; }
+function need(id, vals) {
+  if (vals.some(function (v) { return Number.isNaN(v); })) { show(id, '<span class="err">数字で入れてください。</span>'); return false; }
+  if (!ready(vals)) { show(id, "数字を入れると、ここに結果が出ます。"); return false; }
+  return true;
+}
+
+function update() {
+  var a, b, p, q, r;
+  a = numOrNull("a1"); p = numOrNull("p1");
+  if (need("r1", [a, p])) show("r1", fmt(a) + " の " + fmt(p) + "% は <b>" + fmt(pctOf(a, p)) + "</b>");
+
+  a = numOrNull("a2"); b = numOrNull("b2");
+  if (need("r2", [a, b])) {
+    r = whatPct(a, b);
+    show("r2", r === null ? '<span class="err">Bに0は使えません。</span>' : fmt(a) + " は " + fmt(b) + " の <b>" + fmt(r) + "%</b>");
+  }
+
+  a = numOrNull("a3"); p = numOrNull("p3");
+  if (need("r3", [a, p])) {
+    if (document.getElementById("k3").value === "off") {
+      r = discount(a, p);
+      show("r3", fmt(a) + " の " + fmt(p) + "% 引き:<b>" + fmt(r.price) + "</b>(" + fmt(r.diff) + " 安くなります)");
+    } else {
+      r = markup(a, p);
+      show("r3", fmt(a) + " の " + fmt(p) + "% 増し:<b>" + fmt(r.price) + "</b>(" + fmt(r.diff) + " 増えます)");
+    }
+  }
+
+  a = numOrNull("a4"); p = numOrNull("p4"); q = numOrNull("q4");
+  if (need("r4", [a, p, q])) {
+    r = twoStage(a, p, q);
+    show("r4", "1回目の後:" + fmt(r.afterFirst) + "<br>2回目の後:<b>" + fmt(r.price) + "</b>(" + fmt(r.diff) + " 安くなります)" +
+      (r.totalOff === null ? "" : "<br>元の金額から見た合計の割引率:<b>" + fmt(r.totalOff) + "%</b>(" + fmt(p) + " + " + fmt(q) + " = " + fmt(p + q) + "% ではありません)"));
+  }
+}
+
+["a1", "p1", "a2", "b2", "a3", "p3", "k3", "a4", "p4", "q4"].forEach(function (id) {
+  var el = document.getElementById(id);
+  el.addEventListener("input", update);
+  el.addEventListener("change", update);
+});
+update();
+</script>
+</body>
+</html>
