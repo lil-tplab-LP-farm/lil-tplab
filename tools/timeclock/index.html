@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>出退勤の打刻</title>
+<style>
+  :root { --in:#1565c0; --out:#c62828; --ink:#1b1f24; --mute:#5b6570; --line:#d5dae0; --bg:#f4f6f8; --card:#fff; --warn:#fff3cd; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; padding:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif; }
+  body { min-height:100vh; display:flex; flex-direction:column; -webkit-text-size-adjust:100%; }
+  button { font:inherit; cursor:pointer; touch-action:manipulation; }
+  button:disabled { cursor:not-allowed; }
+  .clock { min-height:36vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background:#101820; color:#fff; padding:12px; text-align:center; }
+  .clock .time { font-family:ui-monospace,Menlo,Consolas,monospace; font-variant-numeric:tabular-nums;
+    font-size:clamp(2rem,11vw,6.5rem); font-weight:700; letter-spacing:0; line-height:1.1; }
+  .clock .date { font-size:clamp(1rem,4vw,1.8rem); margin-top:6px; color:#c9d3dd; }
+  .clock .count { margin-top:8px; font-size:clamp(.9rem,3vw,1.2rem); color:#9fb3c8; }
+  main { flex:1; padding:14px; max-width:1100px; width:100%; margin:0 auto; }
+  .banner { background:var(--warn); border:1px solid #e0c36a; padding:10px 12px; border-radius:8px; margin-bottom:12px; font-size:.95rem; }
+  .banner.err { background:#fde2e1; border-color:#e59a97; }
+  h2 { font-size:1.05rem; margin:0 0 8px; }
+  .staff-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; }
+  .staff { background:var(--card); border:2px solid var(--line); border-radius:12px; padding:12px 8px; min-height:76px; text-align:center; color:var(--ink); }
+  .staff .nm { font-size:1.15rem; font-weight:700; word-break:break-all; }
+  .staff .st { font-size:.85rem; margin-top:4px; color:var(--mute); }
+  .staff.working { border-color:var(--in); background:#e8f1fc; }
+  .staff.working .st { color:var(--in); font-weight:700; }
+  .staff.selected { outline:4px solid #f9a825; }
+  .actions { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:14px 0; }
+  .act { min-height:120px; border:none; border-radius:16px; color:#fff; font-size:clamp(1.6rem,7vw,2.6rem); font-weight:700; }
+  .act.in { background:var(--in); } .act.out { background:var(--out); }
+  .act:disabled { background:#c3c9d0; color:#f4f4f4; }
+  .act small { display:block; font-size:.9rem; font-weight:400; margin-top:4px; }
+  .hint { color:var(--mute); margin:10px 0; }
+  .frozen { border-radius:16px; color:#fff; padding:16px; text-align:center; font-size:clamp(1.6rem,7vw,3rem); font-weight:700; margin:6px 0 14px; }
+  .frozen.in { background:var(--in); } .frozen.out { background:var(--out); }
+  .frozen .t { font-family:ui-monospace,Menlo,Consolas,monospace; font-variant-numeric:tabular-nums; }
+  .frozen small { display:block; font-size:.9rem; font-weight:400; margin-top:4px; }
+  .overlay-result { position:fixed; left:12px; right:12px; top:12px; z-index:50; border-radius:16px; color:#fff; padding:18px;
+    text-align:center; font-size:clamp(1.4rem,6vw,3rem); font-weight:700; box-shadow:0 8px 30px rgba(0,0,0,.35); }
+  .overlay-result.in { background:var(--in); } .overlay-result.out { background:var(--out); }
+  .overlay-result .t { font-family:ui-monospace,Menlo,Consolas,monospace; display:block; }
+  .undo-bar { position:fixed; left:12px; right:12px; bottom:12px; z-index:49; background:#fff; border:2px solid #444; border-radius:12px;
+    padding:10px; display:flex; gap:10px; align-items:center; justify-content:space-between; }
+  .undo-bar button { min-height:48px; padding:0 18px; border-radius:10px; border:2px solid #444; background:#fff; font-weight:700; }
+  footer { padding:14px; font-size:.82rem; color:var(--mute); max-width:1100px; width:100%; margin:0 auto; }
+  footer ul { margin:6px 0 10px; padding-left:1.2em; }
+  .admin-link { background:none; border:1px solid var(--line); border-radius:8px; padding:10px 16px; color:var(--mute); min-height:44px; }
+  .modal { position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:60; overflow:auto; padding:10px; }
+  .panel { background:#fff; border-radius:14px; max-width:960px; margin:0 auto; padding:14px; }
+  .panel header { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:10px; }
+  .tabs { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
+  .tabs button, .btn { min-height:44px; padding:0 14px; border:1px solid #9aa4af; border-radius:10px; background:#fff; }
+  .tabs button.on { background:#101820; color:#fff; border-color:#101820; }
+  .btn.primary { background:var(--in); color:#fff; border-color:var(--in); }
+  .btn.danger { background:var(--out); color:#fff; border-color:var(--out); }
+  input[type=text],input[type=password],input[type=number],input[type=datetime-local],select {
+    font:inherit; min-height:44px; padding:6px 10px; border:1px solid #9aa4af; border-radius:8px; max-width:100%; }
+  .row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:6px 0; }
+  table { border-collapse:collapse; width:100%; font-size:.9rem; }
+  th,td { border-bottom:1px solid var(--line); padding:6px 4px; text-align:left; vertical-align:middle; }
+  .tablewrap { overflow-x:auto; }
+  .tag { display:inline-block; padding:1px 6px; border-radius:6px; font-size:.78rem; background:#eee; }
+  .tag.in { background:#dbe9fb; color:var(--in); } .tag.out { background:#fbdcdb; color:var(--out); }
+  .muted { color:var(--mute); font-size:.85rem; }
+  .hidden { display:none !important; }
+  @media (max-width:420px) { .actions { gap:8px; } .act { min-height:104px; } }
+</style>
+</head>
+<body>
+<div class="clock" aria-live="off">
+  <div class="time" id="clockTime">--:--:--.---</div>
+  <div class="date" id="clockDate"></div>
+  <div class="count" id="workingCount"></div>
+</div>
+<main id="main"></main>
+<footer>
+  <ul>
+    <li>時刻は、この端末の時計を使っています。</li>
+    <li>記録は、この端末の中だけにあります。ブラウザのデータを消すと消えます。月に1回は、管理画面でバックアップを保存してください。</li>
+    <li>これは記録の道具です。労務の判断(残業・休憩・給与の計算など)はしません。</li>
+  </ul>
+  <button class="admin-link" id="adminBtn" type="button">管理画面</button>
+</footer>
+<div id="resultBox"></div>
+<div id="undoBox"></div>
+<div id="adminBox"></div>
+<div id="noticeBox"></div>
+
+<!-- ============ 計算の部分(画面と切り離す。test/ から node で試す) ============ -->
+<script id="core">
+// ==CORE_START==
+const MAX_STAFF = 10;           // 同時に使える(休止していない)スタッフの最大人数
+const UNDO_MS = 10000;          // 打刻直後に取り消せる時間
+const PENDING_MS = 30000;       // 出勤/退勤を押してから名前を選ぶまでの待ち時間(過ぎたら捨てる)
+const STALE_OPEN_MS = 12 * 3600000;  // 出勤中のまま、これを超えたら「前回の退勤が未入力」の疑い
+const CLOCK_AHEAD_MS = 72 * 3600000; // 直前の打刻からこれ以上先の時刻なら、端末の時計を確認してもらう
+const MAX_PENDINGS = 3;              // 保留(押したが名前未選択)を同時に持てる最大数
+const DISCLAIMER = 'これは簡易な打刻の道具です。出勤簿・賃金台帳など法令で求められる記録として使えることは保証しません。時刻は端末の時計で、修正や書き換えを完全には防げません。必要な保存や計算は、ご自身(必要なら社労士など)で確認してください。';
+// 人数の上限は、必ずこの関数を通して読む。将来、利用コード(期限つき)で 32人・無制限に上げる時は、ここだけを変える。
+// 今は常に MAX_STAFF(10)。利用コードの仕組みはまだ無い。
+function maxStaff() { return MAX_STAFF; }
+
+const pad = (n, w = 2) => String(n).padStart(w, '0');
+const WEEK = ['日', '月', '火', '水', '木', '金', '土'];
+
+function fmtDate(ts) { const d = new Date(ts); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+function fmtHMS(ts) { const d = new Date(ts); return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()); }
+function fmtTime(ts) { return fmtHMS(ts) + '.' + pad(new Date(ts).getMilliseconds(), 3); }
+function fmtDateTime(ts) { return fmtDate(ts) + ' ' + fmtTime(ts); }
+function fmtHM(min) { return Math.floor(min / 60) + ':' + pad(min % 60); }
+function fmtDateJa(ts) { const d = new Date(ts); return d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日(' + WEEK[d.getDay()] + ')'; }
+function monthKey(ts) { return fmtDate(ts).slice(0, 7); }
+function toInputValue(ts) { return fmtDate(ts) + 'T' + fmtHMS(ts); }
+
+// "YYYY-MM-DDTHH:MM[:SS]" or "YYYY-MM-DD HH:MM[:SS]" → ms (端末のローカル時刻)。不正は null
+function parseLocalDateTime(s) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?$/.exec(String(s || '').trim());
+  if (!m) return null;
+  const [y, mo, d, h, mi, se] = [+m[1], +m[2], +m[3], +m[4], +m[5], +(m[6] || 0)];
+  const dt = new Date(y, mo - 1, d, h, mi, se, 0);
+  if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d || dt.getHours() !== h || dt.getMinutes() !== mi) return null;
+  return dt.getTime();
+}
+
+// ---- 記録(追記のみ)から「いま有効な打刻」を作る ----
+// log の要素: {kind:'punch', id, staffId, type:'in'|'out', ts, at, manual?, reason?}
+//             {kind:'correct', targetId, newTs, reason, at}   ← 元の打刻は消さず、修正後を足す
+//             {kind:'undo', targetId, reason, at}             ← 取り消し。元の打刻は残る
+function effectivePunches(log) {
+  const byId = new Map(); const order = [];
+  for (const e of log) {
+    if (e.kind === 'punch') {
+      byId.set(e.id, { id: e.id, staffId: e.staffId, type: e.type, ts: e.ts, originalTs: e.manual ? null : e.ts,
+        corrected: false, manual: !!e.manual, reason: e.manual ? (e.reason || '') : '', voided: false, voidReason: '', idx: order.length });
+      order.push(e.id);
+    } else if (e.kind === 'correct') {
+      const p = byId.get(e.targetId);
+      if (p) { p.ts = e.newTs; p.corrected = true; p.reason = e.reason || ''; }
+    } else if (e.kind === 'undo') {
+      const p = byId.get(e.targetId);
+      if (p) { p.voided = true; p.voidReason = e.reason || ''; }
+    }
+  }
+  return order.map(id => byId.get(id));
+}
+
+function sortedLive(punches) {
+  return punches.filter(p => !p.voided).sort((a, b) => a.ts - b.ts || a.idx - b.idx);
+}
+
+// 出勤→退勤を組にする。日またぎは出勤日の勤務。同じ日に2回出退勤すれば2行。
+function pairShifts(punches) {
+  const byStaff = new Map();
+  for (const p of sortedLive(punches)) {
+    if (!byStaff.has(p.staffId)) byStaff.set(p.staffId, []);
+    byStaff.get(p.staffId).push(p);
+  }
+  const shifts = [];
+  for (const [staffId, list] of byStaff) {
+    let open = null;
+    for (const p of list) {
+      const mod = p.corrected || p.manual;
+      if (p.type === 'in') {
+        if (open) shifts.push(open);                // 退勤が無いまま次の出勤 → 前の勤務は未退勤
+        open = { staffId, inTs: p.ts, outTs: null, modified: mod };
+      } else if (open) {
+        open.outTs = p.ts; open.modified = open.modified || mod; shifts.push(open); open = null;
+      } else {
+        shifts.push({ staffId, inTs: null, outTs: p.ts, modified: mod });   // 出勤の無い退勤
+      }
+    }
+    if (open) shifts.push(open);
+  }
+  return shifts.sort((a, b) => (a.inTs ?? a.outTs) - (b.inTs ?? b.outTs));
+}
+
+function shiftDateTs(s) { return s.inTs ?? s.outTs; }
+function shiftMinutes(s) { return (s.inTs != null && s.outTs != null) ? Math.floor((s.outTs - s.inTs) / 60000) : null; }
+
+function staffStatus(punches, staffId) {
+  const live = sortedLive(punches).filter(p => p.staffId === staffId);
+  const last = live[live.length - 1];
+  return last && last.type === 'in' ? { working: true, since: last.ts, lastId: last.id } : { working: false, since: null, lastId: last ? last.id : null };
+}
+
+// 打刻してよいか。OK なら null、だめなら理由の文字列
+// opts.allowStaleIn: 出勤中のまま12時間超の人の「出勤」を認める(前回の退勤は未入力のまま残る)
+// opts.allowClockBack: 前回の打刻より前の時刻でも、確認済みとして認める
+function validatePunch(punches, staffId, type, ts, opts) {
+  opts = opts || {};
+  if (type !== 'in' && type !== 'out') return '種類が正しくありません';
+  const st = staffStatus(punches, staffId);
+  if (type === 'in' && st.working && !(opts.allowStaleIn && ts - st.since >= STALE_OPEN_MS)) return '出勤中です(退勤だけ押せます)';
+  if (type === 'out' && !st.working) return 'まだ出勤していません(出勤だけ押せます)';
+  const live = sortedLive(punches).filter(p => p.staffId === staffId);
+  const last = live[live.length - 1];
+  if (last && ts < last.ts && !opts.allowClockBack) return '端末の時計が、前回の打刻より前になっています。時計を確認してください';
+  return null;
+}
+
+// 出勤中のまま12時間を超えている人(前回の退勤の押し忘れの疑い)
+function staleOpen(punches, activeStaff, now) {
+  return activeStaff.filter(s => { const st = staffStatus(punches, s.id); return st.working && now - st.since >= STALE_OPEN_MS; });
+}
+// 「出勤から◯時間◯分」
+function fmtElapsed(ms) {
+  const m = Math.max(0, Math.floor(ms / 60000)), h = Math.floor(m / 60);
+  return h >= 1 ? h + '時間' + (m % 60) + '分' : m + '分';
+}
+// 取り消せる期限は「名前を確定した時刻」から数える
+function undoDeadline(confirmedAt) { return confirmedAt + UNDO_MS; }
+
+// 打刻時に端末の時計を確認してもらうべきか。なければ null
+// back: この人の前回の打刻より前 / ahead: 直前(だれの分でも)の打刻から72時間以上先
+function clockWarning(punches, staffId, ts) {
+  const live = sortedLive(punches);
+  const mine = live.filter(p => p.staffId === staffId);
+  const lastMine = mine[mine.length - 1];
+  if (lastMine && ts < lastMine.ts) return { kind: 'back', last: lastMine.ts };
+  const last = live[live.length - 1];
+  if (last && ts - last.ts >= CLOCK_AHEAD_MS) return { kind: 'ahead', last: last.ts };
+  return null;
+}
+
+// 1人の出勤・退勤の並びの乱れの数(退勤が出勤なしで出る/出勤が連続)。修正・追加の保存前の警告に使う
+function sequenceProblems(punches, staffId) {
+  let prev = null, n = 0;
+  for (const p of sortedLive(punches).filter(x => x.staffId === staffId)) {
+    if (p.type === 'out' && prev !== 'in') n++;
+    if (p.type === 'in' && prev === 'in') n++;
+    prev = p.type;
+  }
+  return n;
+}
+
+// ---- 「先に押す→あとで名前を選ぶ」 ----
+// 押した瞬間の打刻(保留)を作る。ts はここで確定する。
+function makePending(type, ts) { return { type, ts }; }
+// 保留が古すぎるか(押してから PENDING_MS を超えたら捨てる)
+function pendingExpired(pending, now) { return !pending || (now - pending.ts) >= PENDING_MS; }
+// 保留は最大 MAX_PENDINGS 件。期限切れは除き、新しいものを足す(あふれたら古いものから落とす)
+function prunePendings(list, now) { return list.filter(p => !pendingExpired(p, now)); }
+function addPending(list, p, now) { const l = prunePendings(list, now).concat([p]); return l.slice(Math.max(0, l.length - MAX_PENDINGS)); }
+// 名前の候補。出勤を押した時は「いま出勤していない人」、退勤を押した時は「いま出勤中の人」だけ。
+function candidatesFor(punches, activeStaff, type) {
+  return activeStaff.filter(s => C_staffWorking(punches, s.id) === (type === 'out'));
+}
+function C_staffWorking(punches, staffId) { return staffStatus(punches, staffId).working; }
+
+// ---- 名前・人数 ----
+function validateStaffName(name, staffList, selfId) {
+  const n = String(name || '').trim();
+  if (!n) return '名前を入れてください';
+  if (n.length > 20) return '名前は20文字までです';
+  if (staffList.some(s => s.id !== selfId && s.name === n)) return '同じ名前がすでにあります';
+  return null;
+}
+function canActivateMore(staffList, max = maxStaff()) { return staffList.filter(s => s.active).length < max; }
+
+// ---- CSV ----
+function csvCell(v) {
+  if (v === null || v === undefined) return '';
+  if (typeof v === 'number') return String(v);
+  let s = String(v);
+  if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;          // Excel の数式として実行されないように
+  return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+function toCSV(header, rows) { return [header, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n'; }
+
+const SHEET_HEADER = ['日付', 'スタッフ名', '出勤時刻', '退勤時刻', '勤務時間(時:分)', '勤務時間(分)', '修正あり', '備考'];
+const RAW_HEADER = ['日時(ミリ秒)', 'スタッフ名', '種類', '修正前の時刻', '修正理由'];
+const TYPE_JA = { in: '出勤', out: '退勤' };
+
+function staffNameMap(staffList) { const m = new Map(); staffList.forEach((s, i) => m.set(s.id, { name: s.name, order: i })); return m; }
+
+// 月(YYYY-MM)の勤務表。出勤日がその月の勤務を載せる。
+function monthlySheetRows(punches, month, staffList) {
+  const names = staffNameMap(staffList);
+  const nm = id => (names.get(id) || { name: id }).name;
+  const od = id => (names.get(id) || { order: 999 }).order;
+  const shifts = pairShifts(punches).filter(s => monthKey(shiftDateTs(s)) === month);
+  shifts.sort((a, b) => fmtDate(shiftDateTs(a)).localeCompare(fmtDate(shiftDateTs(b))) || od(a.staffId) - od(b.staffId) || shiftDateTs(a) - shiftDateTs(b));
+  return shifts.map(s => {
+    const min = shiftMinutes(s);
+    let outText = '', note = '';
+    if (s.outTs != null) outText = (s.inTs != null && fmtDate(s.outTs) !== fmtDate(s.inTs)) ? fmtDate(s.outTs) + ' ' + fmtHMS(s.outTs) : fmtHMS(s.outTs);
+    if (s.outTs == null) note = '未退勤';
+    if (s.inTs == null) note = '出勤の記録なし';
+    if (min != null && min > 1440) note = '24時間超';
+    return [fmtDate(shiftDateTs(s)), nm(s.staffId), s.inTs != null ? fmtHMS(s.inTs) : '', outText,
+      min != null ? fmtHM(min) : '', min != null ? min : '', s.modified ? 'あり' : '', note];
+  });
+}
+
+// 打刻の生記録(取り消し・修正も含む)。日時は修正後。修正前の時刻と理由を並べる。
+function rawRows(punches, month, staffList) {
+  const names = staffNameMap(staffList);
+  const nm = id => (names.get(id) || { name: id }).name;
+  return punches.filter(p => monthKey(p.ts) === month)
+    .sort((a, b) => a.ts - b.ts || a.idx - b.idx)
+    .map(p => {
+      let type = TYPE_JA[p.type];
+      if (p.manual) type += '(手入力)';
+      if (p.voided) type += '(取消)';
+      return [fmtDateTime(p.ts), nm(p.staffId), type, p.corrected && p.originalTs != null ? fmtDateTime(p.originalTs) : '',
+        p.voided ? p.voidReason : p.reason];
+    });
+}
+
+function monthlyCSV(punches, month, staffList) { return toCSV(SHEET_HEADER, monthlySheetRows(punches, month, staffList)); }
+function rawCSV(punches, month, staffList) { return toCSV(RAW_HEADER, rawRows(punches, month, staffList)); }
+
+// ---- 暗証番号(誤操作よけ。強い防御ではない) ----
+function hashPin(pin, salt) {
+  let h1 = 0xdeadbeef ^ 0, h2 = 0x41c6ce57 ^ 0; const str = salt + ':' + pin;
+  for (let i = 0; i < str.length; i++) { const c = str.charCodeAt(i); h1 = Math.imul(h1 ^ c, 2654435761); h2 = Math.imul(h2 ^ c, 1597334677); }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(16);
+}
+const isPin = s => /^\d{4}$/.test(String(s));
+
+// ---- バックアップ ----
+function validateBackup(o) {
+  if (!o || typeof o !== 'object') return 'ファイルの中身が正しくありません';
+  if (o.app !== 'timeclock') return 'この道具のバックアップではありません';
+  if (!Array.isArray(o.log) || !Array.isArray(o.staff)) return 'データが足りません';
+  for (const e of o.log) {
+    if (!e || !['punch', 'correct', 'undo'].includes(e.kind)) return '記録の形が正しくありません';
+    if (e.kind === 'punch' && (typeof e.ts !== 'number' || !e.id || !e.staffId || !['in', 'out'].includes(e.type))) return '打刻の形が正しくありません';
+    if (e.kind === 'correct' && (typeof e.newTs !== 'number' || !e.targetId)) return '修正の形が正しくありません';
+    if (e.kind === 'undo' && !e.targetId) return '取り消しの形が正しくありません';
+  }
+  for (const s of o.staff) if (!s || !s.id || typeof s.name !== 'string') return 'スタッフの形が正しくありません';
+  return null;
+}
+function daysSince(ts, now) { return ts ? Math.floor((now - ts) / 86400000) : null; }
+
+const Core = { MAX_STAFF, UNDO_MS, PENDING_MS, STALE_OPEN_MS, CLOCK_AHEAD_MS, MAX_PENDINGS, DISCLAIMER,
+  staleOpen, fmtElapsed, undoDeadline, clockWarning, sequenceProblems, prunePendings, addPending,
+  maxStaff, makePending, pendingExpired, candidatesFor, fmtDate, fmtHMS, fmtTime, fmtDateTime, fmtHM, fmtDateJa, monthKey, toInputValue, parseLocalDateTime,
+  effectivePunches, pairShifts, shiftMinutes, staffStatus, validatePunch, validateStaffName, canActivateMore,
+  csvCell, toCSV, monthlySheetRows, rawRows, monthlyCSV, rawCSV, hashPin, isPin, validateBackup, daysSince, SHEET_HEADER, RAW_HEADER };
+// ==CORE_END==
+</script>
+
+<!-- ============ 画面と保存の部分 ============ -->
+<script>
+(function () {
+'use strict';
+const C = Core;
+const $ = id => document.getElementById(id);
+function h(tag, attrs, ...kids) {
+  const el = document.createElement(tag);
+  for (const k in (attrs || {})) {
+    const v = attrs[k];
+    if (k === 'class') el.className = v;
+    else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+    else if (v === true) el.setAttribute(k, '');
+    else if (v !== false && v != null) el.setAttribute(k, v);
+  }
+  for (const kid of kids.flat()) if (kid != null && kid !== false) el.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+  return el;
+}
+const uid = p => p + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+// ---------- 保存(IndexedDB。だめなら localStorage。それもだめならメモリだけ) ----------
+const Store = {
+  mode: 'memory', db: null, log: [], meta: {}, seq: 0,
+  async init() {
+    try { await this.openIDB(); this.mode = 'indexeddb'; }
+    catch (e) {
+      try { this.loadLS(); this.mode = 'localstorage'; } catch (e2) { this.mode = 'memory'; }
+    }
+    try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+  },
+  openIDB() {
+    return new Promise((res, rej) => {
+      if (!window.indexedDB) return rej(new Error('no idb'));
+      const rq = indexedDB.open('timeclock', 1);
+      rq.onupgradeneeded = () => { const d = rq.result; d.createObjectStore('log', { keyPath: 'seq', autoIncrement: true }); d.createObjectStore('meta', { keyPath: 'key' }); };
+      rq.onerror = () => rej(rq.error); rq.onblocked = () => rej(new Error('blocked'));
+      rq.onsuccess = () => { this.db = rq.result; this.readIDB().then(res, rej); };
+    });
+  },
+  readIDB() {
+    return new Promise((res, rej) => {
+      const tx = this.db.transaction(['log', 'meta'], 'readonly');
+      const a = tx.objectStore('log').getAll(), b = tx.objectStore('meta').getAll();
+      tx.oncomplete = () => { this.log = a.result; this.meta = {}; b.result.forEach(r => this.meta[r.key] = r.value); res(); };
+      tx.onerror = () => rej(tx.error);
+    });
+  },
+  // 保存先を読み直す(タブを2つ開いていても、打刻の直前に最新の記録で確かめる)
+  async reload() {
+    if (this.mode === 'indexeddb') await this.readIDB();
+    else if (this.mode === 'localstorage') {
+      const raw = localStorage.getItem('timeclock_v1');
+      if (raw) { const o = JSON.parse(raw); this.log = o.log; this.meta = o.meta; this.seq = o.seq; }
+    }
+  },
+  // 保存テスト: 書いて、読み直して、同じ値が返るか
+  probe: { ok: false, text: '未実施' },
+  async runProbe() {
+    if (this.mode === 'memory') { this.probe = { ok: false, text: '保存できません' }; return; }
+    try {
+      const v = 'p' + Date.now();
+      await this.setMeta('_probe', v);
+      await this.reload();
+      this.probe = this.meta._probe === v ? { ok: true, text: '成功' } : { ok: false, text: '失敗(書いた内容が読めません)' };
+    } catch (e) { this.probe = { ok: false, text: '失敗(' + (e && e.message ? e.message : e) + ')' }; }
+  },
+  loadLS() {
+    const raw = localStorage.getItem('timeclock_v1');
+    const o = raw ? JSON.parse(raw) : { log: [], meta: {}, seq: 0 };
+    this.log = o.log; this.meta = o.meta; this.seq = o.seq;
+    localStorage.setItem('timeclock_v1', JSON.stringify(o));   // 書けるか試す
+  },
+  saveLS() { localStorage.setItem('timeclock_v1', JSON.stringify({ log: this.log, meta: this.meta, seq: this.seq })); },
+  async append(entry) {
+    if (this.mode === 'indexeddb') {
+      const seq = await new Promise((res, rej) => { const tx = this.db.transaction('log', 'readwrite'); const rq = tx.objectStore('log').add(entry);
+        tx.oncomplete = () => res(rq.result); tx.onerror = () => rej(tx.error); tx.onabort = () => rej(tx.error); });
+      entry.seq = seq; this.log.push(entry);
+    } else {
+      entry.seq = ++this.seq; this.log.push(entry);
+      if (this.mode === 'localstorage') { try { this.saveLS(); } catch (e) { this.log.pop(); throw e; } }
+    }
+  },
+  async setMeta(key, value) {
+    if (this.mode === 'indexeddb') {
+      await new Promise((res, rej) => { const tx = this.db.transaction('meta', 'readwrite'); tx.objectStore('meta').put({ key, value });
+        tx.oncomplete = res; tx.onerror = () => rej(tx.error); tx.onabort = () => rej(tx.error); });
+      this.meta[key] = value;
+    } else {
+      this.meta[key] = value;
+      if (this.mode === 'localstorage') this.saveLS();
+    }
+  },
+  async replaceAll(log, meta) {
+    if (this.mode === 'indexeddb') {
+      await new Promise((res, rej) => { const tx = this.db.transaction(['log', 'meta'], 'readwrite');
+        const l = tx.objectStore('log'), m = tx.objectStore('meta'); l.clear(); m.clear();
+        log.forEach(e => { const c = Object.assign({}, e); delete c.seq; l.add(c); });
+        Object.keys(meta).forEach(k => m.put({ key: k, value: meta[k] }));
+        tx.oncomplete = res; tx.onerror = () => rej(tx.error); tx.onabort = () => rej(tx.error); });
+      const tx2 = this.db.transaction(['log', 'meta'], 'readonly');
+      const a = tx2.objectStore('log').getAll(), b = tx2.objectStore('meta').getAll();
+      await new Promise((res, rej) => { tx2.oncomplete = res; tx2.onerror = () => rej(tx2.error); });
+      this.log = a.result; this.meta = {}; b.result.forEach(r => this.meta[r.key] = r.value);
+    } else {
+      this.log = log.map((e, i) => Object.assign({}, e, { seq: i + 1 })); this.seq = this.log.length; this.meta = Object.assign({}, meta);
+      if (this.mode === 'localstorage') this.saveLS();
+    }
+  }
+};
+
+// ---------- 状態 ----------
+// pends: 押したが名前が未選択の打刻(最大3件・それぞれ30秒で捨てる)。repress: 「自分の分を押し直す」中
+const S = { pends: [], repress: false, clockOkDay: null, adminOpen: false, unlocked: false, tab: 'staff', msg: null, busy: false,
+  undo: null, result: null, editing: null, month: C.monthKey(Date.now()) };
+const getStaff = () => Store.meta.staff || [];
+const getPunches = () => C.effectivePunches(Store.log);
+const staffName = id => (getStaff().find(s => s.id === id) || { name: id }).name;
+
+function flash(text, isErr) { S.msg = { text, err: !!isErr }; renderMain(); if (S.adminOpen) renderAdmin(); }
+async function guarded(fn) {
+  if (S.busy) return; S.busy = true;
+  try { await fn(); } catch (e) { flash('保存できませんでした: ' + (e && e.message ? e.message : e) + '(記録されていません。もう一度お試しください)', true); }
+  finally { S.busy = false; }
+}
+
+// ---------- 時計 ----------
+let lastClock = '';
+function tick() {
+  const now = Date.now(); const t = C.fmtTime(now);
+  if (t !== lastClock) { $('clockTime').textContent = t; lastClock = t; }
+  const d = C.fmtDateJa(now); if ($('clockDate').textContent !== d) $('clockDate').textContent = d;
+  requestAnimationFrame(tick);
+}
+
+// ---------- メイン画面 ----------
+function backupLine() {
+  const t = Store.meta.lastBackupAt;
+  return 'この端末・このブラウザの中だけに保存 / 保存テスト: ' + Store.probe.text + ' / バックアップ最終日: ' + (t ? C.fmtDate(t) : 'まだありません');
+}
+function candButtons(cands, pd, stale) {
+  const punches = getPunches();
+  return h('div', { class: 'staff-grid' }, cands.map(s => {
+    const st = C.staffStatus(punches, s.id);
+    return h('button', { type: 'button', class: 'staff', onclick: () => choose(s.id, pd, stale) }, h('div', { class: 'nm' }, s.name),
+      st.working ? h('div', { class: 'st' }, '出勤から' + C.fmtElapsed(Date.now() - st.since)) : null);
+  }));
+}
+function ageText(pd) { return Math.max(0, Math.floor((Date.now() - pd.ts) / 1000)) + '秒前'; }
+function leftText(pd) { return 'あと' + Math.max(0, Math.ceil((pd.ts + C.PENDING_MS - Date.now()) / 1000)) + '秒で自動的に捨てます'; }
+
+function renderMain() {
+  const main = $('main'); main.textContent = '';
+  S.pends = C.prunePendings(S.pends, Date.now());
+  const punches = getPunches();
+  const active = getStaff().filter(s => s.active);
+  main.append(h('div', { class: 'muted', style: 'margin-bottom:8px;font-size:.78rem' + (Store.probe.ok ? '' : ';color:#c62828;font-weight:700') }, backupLine()));
+  if (S.msg) main.append(h('div', { class: 'banner' + (S.msg.err ? ' err' : '') }, S.msg.text));
+  if (Store.mode === 'memory') main.append(h('div', { class: 'banner err' }, 'このブラウザでは記録を保存できません。ページを閉じると記録が消えます。(プライベートモードを使っていませんか?)'));
+  else if (!Store.probe.ok) main.append(h('div', { class: 'banner err' }, '保存テストに失敗しました(' + Store.probe.text + ')。記録が残らないかもしれません。別のブラウザで開き直してください。'));
+  const bdays = C.daysSince(Store.meta.lastBackupAt, Date.now());
+  if (Store.log.length && (bdays === null || bdays >= 30)) main.append(h('div', { class: 'banner' }, bdays === null ? 'まだバックアップを保存していません。管理画面から保存してください。' : 'バックアップから' + bdays + '日たっています。管理画面から保存してください。'));
+  const working = active.filter(s => C.staffStatus(punches, s.id).working);
+  $('workingCount').textContent = active.length ? '出勤中 ' + working.length + '人 / ' + active.length + '人' : '';
+  if (!active.length) { main.append(h('p', { class: 'hint' }, 'スタッフがいません。「管理画面」から追加してください。')); return; }
+
+  const act = S.repress ? null : S.pends[S.pends.length - 1];
+  const held = S.repress ? S.pends : S.pends.slice(0, -1);
+
+  if (!act) {
+    if (S.repress) main.append(h('p', { class: 'hint' }, '自分の分を押してください。前に押された分は、下に残っています。'));
+    main.append(h('div', { class: 'actions' },
+      h('button', { type: 'button', class: 'act in', onclick: () => press('in') }, '出勤'),
+      h('button', { type: 'button', class: 'act out', onclick: () => press('out') }, '退勤')));
+    if (S.repress) main.append(h('div', { class: 'row' }, h('button', { type: 'button', class: 'btn', onclick: () => { S.repress = false; renderMain(); } }, 'もどる')));
+    else main.append(h('p', { class: 'hint' }, '先に「出勤」か「退勤」を押してください。そのあと名前を選びます。(押した時刻が記録されます)'));
+    if (working.length) {
+      main.append(h('h2', null, '出勤中'));
+      main.append(h('div', { class: 'staff-grid' }, working.map(s => {
+        const st = C.staffStatus(punches, s.id); const el = Date.now() - st.since; const stale = el >= C.STALE_OPEN_MS;
+        return h('div', { class: 'staff working' }, h('div', { class: 'nm' }, s.name),
+          h('div', { class: 'st' }, '出勤から' + C.fmtElapsed(el) + (stale ? '(退勤の押し忘れ?)' : '')));
+      })));
+    }
+  } else {
+    // 押した瞬間の時刻を止めて見せる → 名前を選ぶ
+    main.append(h('div', { class: 'frozen ' + act.type, role: 'status' }, C.TYPE_JA_(act.type) + ' ',
+      h('span', { class: 't' }, C.fmtTime(act.ts)), h('small', null, '押した時刻はこれで記録されます')));
+    main.append(h('p', { class: 'hint' }, 'これは', h('b', { class: 'pAge', 'data-ts': act.ts }, ageText(act)), 'に押された分です。自分の分でなければ「自分の分を押し直す」を押してください。'));
+    const cands = C.candidatesFor(punches, active, act.type);
+    const stale = act.type === 'in' ? C.staleOpen(punches, active, act.ts) : [];
+    main.append(h('h2', null, '誰ですか?'));
+    if (!cands.length && !stale.length) main.append(h('p', { class: 'hint' }, act.type === 'in' ? '出勤していない人がいません(全員出勤中です)。' : '出勤中の人がいません。'));
+    if (cands.length) main.append(candButtons(cands, act, false));
+    if (stale.length) {
+      main.append(h('h2', { style: 'margin-top:14px' }, '前回の退勤が未入力の人'),
+        h('p', { class: 'muted' }, '選ぶと、前回の退勤は未入力のまま残し、今日の出勤を記録します。(あとで管理画面の「打刻を追加」で前回の退勤を足せます)'),
+        candButtons(stale, act, true));
+    }
+    main.append(h('div', { class: 'row', style: 'margin-top:14px' },
+      h('button', { type: 'button', class: 'btn primary', onclick: () => { S.repress = true; renderMain(); } }, '自分の分を押し直す'),
+      h('button', { type: 'button', class: 'btn', onclick: () => dropPending(act) }, 'この分をやめる'),
+      h('span', { class: 'muted pLeft', 'data-ts': act.ts }, leftText(act))));
+  }
+  if (held.length) {
+    main.append(h('h2', { style: 'margin-top:18px;font-size:.9rem' }, '前に押された分(名前を選べます)'));
+    held.forEach(pd => {
+      const hc = C.candidatesFor(punches, active, pd.type);
+      const hs = pd.type === 'in' ? C.staleOpen(punches, active, pd.ts) : [];
+      main.append(h('div', { class: 'banner', style: 'padding:8px' },
+        h('div', null, C.TYPE_JA_(pd.type) + ' ' + C.fmtTime(pd.ts) + '(', h('span', { class: 'pAge', 'data-ts': pd.ts }, ageText(pd)), ' / ', h('span', { class: 'pLeft', 'data-ts': pd.ts }, leftText(pd)), ')'),
+        hc.length || hs.length ? h('div', { class: 'row' }, hc.concat(hs).map(s => h('button', { type: 'button', class: 'btn', onclick: () => choose(s.id, pd, hs.includes(s)) }, s.name))) : h('div', { class: 'muted' }, '選べる人がいません')));
+    });
+  }
+}
+
+// 押した瞬間に時刻を確定(名前はまだ)。前の保留は捨てずに残す
+function press(type) {
+  if (S.busy) return;
+  S.pends = C.addPending(S.pends, C.makePending(type, Date.now()), Date.now()); S.msg = null; S.repress = false;
+  startPendTick(); renderMain();
+}
+let pendTick = null;
+function startPendTick() {
+  if (pendTick) return;
+  pendTick = setInterval(() => {
+    if (!S.pends.length) { clearInterval(pendTick); pendTick = null; return; }
+    const before = S.pends.length, hadActive = !S.repress ? S.pends[S.pends.length - 1] : null;
+    S.pends = C.prunePendings(S.pends, Date.now());
+    if (S.pends.length !== before) {
+      if (hadActive && !S.pends.includes(hadActive)) {
+        S.msg = { text: '名前が選ばれなかったので、さっきの打刻は捨てました。もう一度押してください。', err: false };
+        setTimeout(() => { if (S.msg && S.msg.text.indexOf('捨てました') >= 0) { S.msg = null; renderMain(); } }, 6000);
+      }
+      if (!S.pends.length) S.repress = false;
+      renderMain(); return;
+    }
+    document.querySelectorAll('.pAge').forEach(el => { el.textContent = ageText({ ts: +el.getAttribute('data-ts') }); });
+    document.querySelectorAll('.pLeft').forEach(el => { el.textContent = leftText({ ts: +el.getAttribute('data-ts') }); });
+  }, 500);
+}
+function dropPending(pd) { S.pends = S.pends.filter(p => p !== pd); S.repress = false; S.msg = null; renderMain(); }
+
+// 名前を選んだ時点で確定。時刻は「押した瞬間」のもの。
+function choose(staffId, pd, stale) {
+  if (!pd || !S.pends.includes(pd)) return;
+  if (C.pendingExpired(pd, Date.now())) { renderMain(); return; }
+  guarded(async () => {
+    await Store.reload();                                   // 別のタブで打刻されていても、最新の記録で確かめる
+    const punches = getPunches();
+    const opts = { allowStaleIn: !!stale };
+    const cw = C.clockWarning(punches, staffId, pd.ts);
+    if (cw && !(cw.kind === 'ahead' && S.clockOkDay === C.fmtDate(pd.ts))) {
+      const msg = cw.kind === 'back'
+        ? '端末の時計を確認してください。今回の時刻(' + C.fmtDateTime(pd.ts).slice(0, 19) + ')が、' + staffName(staffId) + 'さんの前回の打刻(' + C.fmtDateTime(cw.last).slice(0, 19) + ')より前です。このまま記録しますか?'
+        : '端末の時計を確認してください。今回の時刻(' + C.fmtDateTime(pd.ts).slice(0, 19) + ')が、直前の打刻(' + C.fmtDateTime(cw.last).slice(0, 19) + ')から3日以上あとです。(休み明けならこのままで大丈夫です)このまま記録しますか?';
+      if (!confirm(msg)) return;
+      if (cw.kind === 'back') opts.allowClockBack = true; else S.clockOkDay = C.fmtDate(pd.ts);
+      if (C.pendingExpired(pd, Date.now())) { renderMain(); return; }
+    }
+    const err = C.validatePunch(punches, staffId, pd.type, pd.ts, opts);
+    if (err) { flash(err, true); return; }
+    const entry = { kind: 'punch', id: uid('p'), staffId, type: pd.type, ts: pd.ts, at: Date.now() };
+    await Store.append(entry);
+    S.pends = S.pends.filter(p => p !== pd); S.repress = false; S.msg = null;
+    showResult(staffName(staffId), pd.type, pd.ts, entry.id, staffId, entry.at);
+    renderMain();
+  });
+}
+
+let resultTimer = null, undoTimer = null;
+function showResult(name, type, ts, punchId, staffId, confirmedAt) {
+  clearTimeout(resultTimer); clearInterval(undoTimer);
+  const box = $('resultBox'); box.textContent = '';
+  box.append(h('div', { class: 'overlay-result ' + type, role: 'status' }, name + 'さん ' + C.TYPE_JA_(type), h('span', { class: 't' }, C.fmtTime(ts))));
+  resultTimer = setTimeout(() => box.textContent = '', 5000);
+  const ub = $('undoBox'); const until = C.undoDeadline(confirmedAt);     // 名前を確定した時刻から10秒
+  const draw = () => {
+    const left = Math.ceil((until - Date.now()) / 1000);
+    if (left <= 0) { ub.textContent = ''; clearInterval(undoTimer); return; }
+    ub.textContent = '';
+    ub.append(h('div', { class: 'undo-bar' }, h('span', null, name + 'さん ' + C.TYPE_JA_(type) + ' を間違えた?(あと' + left + '秒)'),
+      h('button', { type: 'button', onclick: () => undoPunch(punchId, staffId) }, '取り消す')));
+  };
+  draw(); undoTimer = setInterval(draw, 500);
+}
+function undoPunch(punchId, staffId) {
+  guarded(async () => {
+    await Store.reload();
+    const st = C.staffStatus(getPunches(), staffId);
+    if (st.lastId !== punchId) { flash('取り消せません(あとから別の打刻があります)', true); return; }
+    await Store.append({ kind: 'undo', targetId: punchId, reason: '打刻直後の取り消し', at: Date.now() });
+    clearInterval(undoTimer); clearTimeout(resultTimer); $('undoBox').textContent = ''; $('resultBox').textContent = '';
+    flash('取り消しました(記録には「取消」として残ります)');
+  });
+}
+
+// ---------- 管理画面 ----------
+$('adminBtn').addEventListener('click', () => { S.adminOpen = true; S.unlocked = false; renderAdmin(); });
+function closeAdmin() { S.adminOpen = false; S.unlocked = false; S.editing = null; S.msg = null; $('adminBox').textContent = ''; renderMain(); }
+
+function renderAdmin() {
+  const box = $('adminBox'); box.textContent = '';
+  if (!S.adminOpen) return;
+  const panel = h('div', { class: 'panel' });
+  panel.append(h('header', null, h('h2', { style: 'margin:0' }, '管理画面'), h('button', { class: 'btn', type: 'button', onclick: closeAdmin }, '閉じる')));
+  if (S.msg) panel.append(h('div', { class: 'banner' + (S.msg.err ? ' err' : '') }, S.msg.text));
+  if (!S.unlocked) panel.append(pinForm()); else panel.append(adminTabs());
+  box.append(h('div', { class: 'modal' }, panel));
+}
+
+function pinForm() {
+  const first = !Store.meta.pin;
+  const p1 = h('input', { type: 'password', inputmode: 'numeric', maxlength: 4, autocomplete: 'off', 'aria-label': '暗証番号(4桁)', style: 'width:8em' });
+  const p2 = h('input', { type: 'password', inputmode: 'numeric', maxlength: 4, autocomplete: 'off', 'aria-label': '暗証番号(確認)', style: 'width:8em' });
+  const go = () => guarded(async () => {
+    if (!C.isPin(p1.value)) { flash('数字4桁で入れてください', true); return; }
+    if (first) {
+      if (p1.value !== p2.value) { flash('確認の番号が違います', true); return; }
+      const salt = uid('s'); await Store.setMeta('pin', { salt, hash: C.hashPin(p1.value, salt) });
+      S.unlocked = true; S.msg = null; renderAdmin();
+    } else {
+      const pin = Store.meta.pin;
+      if (C.hashPin(p1.value, pin.salt) !== pin.hash) { flash('暗証番号が違います', true); return; }
+      S.unlocked = true; S.msg = null; renderAdmin();
+    }
+  });
+  return h('div', null,
+    h('p', null, first ? '初めに、暗証番号(数字4桁)を決めてください。' : '暗証番号(数字4桁)を入れてください。'),
+    h('div', { class: 'row' }, p1, first ? p2 : null, h('button', { class: 'btn primary', type: 'button', onclick: go }, first ? '決める' : '開く')),
+    first ? h('p', { class: 'muted' }, '2つの欄に同じ番号を入れます。この番号は、間違って管理画面を開かないためのものです。強い鍵ではありません。') : null,
+    h('p', { class: 'muted' }, '忘れたとき: この画面では番号を再設定できません。次の手順になります。①バックアップのファイル(JSON)があるか確かめる(無いと、この端末の記録は戻せません)。②別のブラウザ、またはブラウザのデータを消した状態でこのページを開き、新しい暗証番号を決める。③管理画面の「バックアップ」から、①のファイルを復元する。復元すると、番号はバックアップを作った時のものに戻ります。※ブラウザのデータを消すと、この端末の今の記録は消えます。'));
+}
+
+function adminTabs() {
+  const tabs = [['staff', 'スタッフ'], ['fix', '打刻の修正'], ['csv', 'CSV'], ['backup', 'バックアップ'], ['pin', '暗証番号']];
+  const wrap = h('div');
+  wrap.append(h('div', { class: 'tabs' }, tabs.map(([k, l]) => h('button', { type: 'button', class: S.tab === k ? 'on' : '', onclick: () => { S.tab = k; S.msg = null; S.editing = null; renderAdmin(); } }, l))));
+  wrap.append({ staff: tabStaff, fix: tabFix, csv: tabCsv, backup: tabBackup, pin: tabPin }[S.tab]());
+  wrap.append(h('p', { class: 'muted' }, '保存先: ' + ({ indexeddb: 'このブラウザ(IndexedDB)', localstorage: 'このブラウザ(localStorage)', memory: '保存できません(メモリのみ)' }[Store.mode]) + ' / 時刻はこの端末の時計 / 労務の判断はしません。'));
+  wrap.append(h('p', { class: 'muted' }, backupLine()));
+  return wrap;
+}
+
+// --- スタッフ ---
+function tabStaff() {
+  const staff = getStaff(); const wrap = h('div');
+  wrap.append(h('p', { class: 'muted' }, '使えるのは休止していない人で最大' + C.MAX_STAFF + '人です(いま ' + staff.filter(s => s.active).length + '人)。削除はできません。休止にすると画面から消えます(記録は残ります)。'));
+  const saveStaff = async list => { await Store.setMeta('staff', list); };
+  const tbody = h('tbody');
+  staff.forEach((s, i) => {
+    const inp = h('input', { type: 'text', value: s.name, maxlength: 20, 'aria-label': '名前', style: 'width:11em' });
+    tbody.append(h('tr', null,
+      h('td', null, inp),
+      h('td', null, h('button', { class: 'btn', type: 'button', onclick: () => guarded(async () => {
+        const e = C.validateStaffName(inp.value, staff, s.id); if (e) { flash(e, true); return; }
+        await saveStaff(staff.map(x => x.id === s.id ? Object.assign({}, x, { name: inp.value.trim() }) : x)); flash('名前を変えました'); }) }, '名前を保存')),
+      h('td', null, s.active ? '使用中' : '休止'),
+      h('td', null, h('button', { class: 'btn', type: 'button', onclick: () => guarded(async () => {
+        if (!s.active && !C.canActivateMore(staff)) { flash('使える人数は最大' + C.MAX_STAFF + '人です', true); return; }
+        await saveStaff(staff.map(x => x.id === s.id ? Object.assign({}, x, { active: !x.active }) : x)); renderAdmin(); }) }, s.active ? '休止にする' : '再開する')),
+      h('td', null,
+        h('button', { class: 'btn', type: 'button', 'aria-label': '上へ', disabled: i === 0, onclick: () => guarded(async () => { const l = staff.slice(); [l[i - 1], l[i]] = [l[i], l[i - 1]]; await saveStaff(l); renderAdmin(); }) }, '↑'),
+        h('button', { class: 'btn', type: 'button', 'aria-label': '下へ', disabled: i === staff.length - 1, onclick: () => guarded(async () => { const l = staff.slice(); [l[i + 1], l[i]] = [l[i], l[i + 1]]; await saveStaff(l); renderAdmin(); }) }, '↓'))));
+  });
+  wrap.append(h('div', { class: 'tablewrap' }, h('table', null, h('thead', null, h('tr', null, ['名前', '', '状態', '', '並び替え'].map(t => h('th', null, t)))), tbody)));
+  const nn = h('input', { type: 'text', maxlength: 20, placeholder: '新しい名前', 'aria-label': '新しい名前' });
+  wrap.append(h('div', { class: 'row' }, nn, h('button', { class: 'btn primary', type: 'button', onclick: () => guarded(async () => {
+    if (!C.canActivateMore(staff)) { flash('使える人数は最大' + C.MAX_STAFF + '人です。誰かを休止にしてください', true); return; }
+    const e = C.validateStaffName(nn.value, staff, null); if (e) { flash(e, true); return; }
+    await saveStaff(staff.concat([{ id: uid('st'), name: nn.value.trim(), active: true }])); flash('追加しました'); }) }, '追加')));
+  return wrap;
+}
+
+// --- 打刻の修正 ---
+function monthPicker(onchange) {
+  const [y, m] = S.month.split('-').map(Number); const now = new Date().getFullYear();
+  const ys = h('select', { 'aria-label': '年' }, [now - 3, now - 2, now - 1, now, now + 1].map(v => h('option', { value: v, selected: v === y }, v + '年')));
+  const ms = h('select', { 'aria-label': '月' }, Array.from({ length: 12 }, (_, i) => i + 1).map(v => h('option', { value: v, selected: v === m }, v + '月')));
+  const upd = () => { S.month = ys.value + '-' + String(ms.value).padStart(2, '0'); onchange(); };
+  ys.addEventListener('change', upd); ms.addEventListener('change', upd);
+  return h('span', null, ys, ' ', ms);
+}
+function tabFix() {
+  const wrap = h('div'); const punches = getPunches(); const staff = getStaff();
+  wrap.append(h('p', { class: 'muted' }, '修正しても元の時刻は消えません。「元の時刻・修正後・理由・修正日時」が記録に残ります。'));
+  wrap.append(h('div', { class: 'row' }, '月: ', monthPicker(renderAdmin)));
+  if (S.editing) wrap.append(editForm(S.editing));
+  else {
+    wrap.append(h('div', { class: 'row' }, h('button', { class: 'btn primary', type: 'button', onclick: () => { S.editing = { mode: 'add' }; renderAdmin(); } }, '打刻を追加(押し忘れ)')));
+  }
+  const list = punches.filter(p => C.monthKey(p.ts) === S.month).sort((a, b) => a.ts - b.ts || a.idx - b.idx);
+  if (!list.length) wrap.append(h('p', { class: 'hint' }, 'この月の打刻はありません。'));
+  else {
+    const stateText = p => p.voided ? '取消(' + p.voidReason + ')'
+      : (p.corrected ? '修正あり(元 ' + C.fmtDateTime(p.originalTs) + ' / ' + p.reason + ')' : (p.manual ? '手入力(' + p.reason + ')' : ''));
+    const editBtn = (p, mode, label) => h('button', { class: 'btn', type: 'button', onclick: () => { S.editing = { mode, id: p.id }; renderAdmin(); } }, label);
+    const rowOf = p => h('tr', null,
+      h('td', null, C.fmtDateTime(p.ts)),
+      h('td', null, staffName(p.staffId)),
+      h('td', null, h('span', { class: 'tag ' + p.type }, C.TYPE_JA_(p.type))),
+      h('td', null, stateText(p)),
+      h('td', null, p.voided ? '' : [editBtn(p, 'edit', '時刻を直す'), ' ', editBtn(p, 'void', '取り消す')]));
+    wrap.append(h('div', { class: 'tablewrap' }, h('table', null,
+      h('thead', null, h('tr', null, ['日時', '名前', '種類', '状態', ''].map(t => h('th', null, t)))),
+      h('tbody', null, list.map(rowOf)))));
+  }
+  return wrap;
+}
+// 修正・追加の保存前: 出勤・退勤の並びが新しく崩れるなら警告(「このまま保存」を選べば保存できる)
+function seqOk(staffId, entry) {
+  const before = C.sequenceProblems(getPunches(), staffId);
+  const after = C.sequenceProblems(C.effectivePunches(Store.log.concat([entry])), staffId);
+  if (after <= before) return true;
+  return confirm(staffName(staffId) + 'さんの出勤・退勤の並びが崩れます(退勤が出勤より前、または出勤・退勤が連続)。勤務表に「未退勤」「出勤の記録なし」が出ます。このまま保存しますか?');
+}
+function editForm(ed) {
+  const punches = getPunches(); const staff = getStaff();
+  const target = ed.id ? punches.find(p => p.id === ed.id) : null;
+  const reason = h('input', { type: 'text', placeholder: '理由(必須)', maxlength: 100, style: 'width:min(24em,100%)', 'aria-label': '理由' });
+  const box = h('div', { class: 'banner' });
+  const cancel = h('button', { class: 'btn', type: 'button', onclick: () => { S.editing = null; renderAdmin(); } }, 'やめる');
+  const needReason = () => { if (!reason.value.trim()) { flash('理由を入れてください', true); return false; } return true; };
+  if (ed.mode === 'void') {
+    box.append(h('p', null, C.fmtDateTime(target.ts) + ' ' + staffName(target.staffId) + ' ' + C.TYPE_JA_(target.type) + ' を取り消します(記録には残ります)。'), h('div', { class: 'row' }, reason,
+      h('button', { class: 'btn danger', type: 'button', onclick: () => guarded(async () => { if (!needReason()) return;
+        await Store.append({ kind: 'undo', targetId: target.id, reason: reason.value.trim(), at: Date.now() }); S.editing = null; flash('取り消しました'); }) }, '取り消す'), cancel));
+  } else if (ed.mode === 'edit') {
+    const dt = h('input', { type: 'datetime-local', step: 1, value: C.toInputValue(target.ts), 'aria-label': '修正後の日時' });
+    box.append(h('p', null, staffName(target.staffId) + ' ' + C.TYPE_JA_(target.type) + '  元の時刻: ' + C.fmtDateTime(target.ts)),
+      h('div', { class: 'row' }, dt, reason, h('button', { class: 'btn primary', type: 'button', onclick: () => guarded(async () => {
+        if (!needReason()) return; const nts = C.parseLocalDateTime(dt.value); if (nts === null) { flash('日時が正しくありません', true); return; }
+        const ent = { kind: 'correct', targetId: target.id, newTs: nts, reason: reason.value.trim(), at: Date.now() };
+        if (!seqOk(target.staffId, ent)) return;
+        await Store.append(ent); S.editing = null; flash('修正しました(元の時刻は残っています)'); }) }, '修正する'), cancel));
+  } else {
+    const sel = h('select', { 'aria-label': 'スタッフ' }, staff.map(s => h('option', { value: s.id }, s.name + (s.active ? '' : '(休止)'))));
+    const ty = h('select', { 'aria-label': '種類' }, h('option', { value: 'in' }, '出勤'), h('option', { value: 'out' }, '退勤'));
+    const dt = h('input', { type: 'datetime-local', step: 1, value: C.toInputValue(Date.now()), 'aria-label': '日時' });
+    box.append(h('p', null, '押し忘れた打刻を足します。「手入力」として記録に残ります。'), h('div', { class: 'row' }, sel, ty, dt, reason,
+      h('button', { class: 'btn primary', type: 'button', onclick: () => guarded(async () => {
+        if (!needReason()) return; const nts = C.parseLocalDateTime(dt.value); if (nts === null) { flash('日時が正しくありません', true); return; }
+        if (!sel.value) { flash('スタッフがいません', true); return; }
+        const ent = { kind: 'punch', id: uid('p'), staffId: sel.value, type: ty.value, ts: nts, at: Date.now(), manual: true, reason: reason.value.trim() };
+        if (!seqOk(sel.value, ent)) return;
+        await Store.append(ent); S.editing = null; flash('追加しました'); }) }, '追加する'), cancel));
+  }
+  return box;
+}
+
+// --- CSV ---
+function download(name, text, type) {
+  const blob = new Blob([text], { type }); const url = URL.createObjectURL(blob);
+  const a = h('a', { href: url, download: name }); document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+function tabCsv() {
+  const wrap = h('div'); const punches = getPunches(); const staff = getStaff();
+  wrap.append(h('div', { class: 'banner' }, C.DISCLAIMER));
+  wrap.append(h('div', { class: 'row' }, '月: ', monthPicker(renderAdmin)));
+  wrap.append(h('p', { class: 'muted' }, 'UTF-8(BOM付き)です。Excelでそのまま開けます。退勤が無い日は退勤欄が空で、備考に「未退勤」と出ます。出勤日がこの月の勤務を載せます。'));
+  wrap.append(h('div', { class: 'row' },
+    h('button', { class: 'btn primary', type: 'button', onclick: () => download('打刻_' + S.month + '.csv', '﻿' + C.monthlyCSV(punches, S.month, staff), 'text/csv;charset=utf-8') }, '月の勤務表をCSVで保存'),
+    h('button', { class: 'btn', type: 'button', onclick: () => download('打刻_生記録_' + S.month + '.csv', '﻿' + C.rawCSV(punches, S.month, staff), 'text/csv;charset=utf-8') }, '打刻の生記録をCSVで保存')));
+  const rows = C.monthlySheetRows(punches, S.month, staff);
+  wrap.append(h('p', { class: 'muted' }, 'この月の勤務: ' + rows.length + '行(下は先頭10行のプレビュー)'));
+  if (rows.length) wrap.append(h('div', { class: 'tablewrap' }, h('table', null, h('thead', null, h('tr', null, C.SHEET_HEADER.map(t => h('th', null, t)))),
+    h('tbody', null, rows.slice(0, 10).map(r => h('tr', null, r.map(c => h('td', null, c === null ? '' : String(c)))))))));
+  return wrap;
+}
+
+// --- バックアップ ---
+function tabBackup() {
+  const wrap = h('div'); const file = h('input', { type: 'file', accept: '.json,application/json', 'aria-label': 'バックアップファイル' });
+  const bd = C.daysSince(Store.meta.lastBackupAt, Date.now());
+  wrap.append(h('p', null, '最後のバックアップ: ' + (Store.meta.lastBackupAt ? C.fmtDateTime(Store.meta.lastBackupAt).slice(0, 16) + '(' + bd + '日前)' : 'まだありません')));
+  const backupData = now => ({ app: 'timeclock', version: 1, exportedAt: now, staff: getStaff(), log: Store.log.map(e => { const c = Object.assign({}, e); delete c.seq; return c; }),
+    meta: { pin: Store.meta.pin || null } });
+  wrap.append(h('div', { class: 'row' }, h('button', { class: 'btn primary', type: 'button', onclick: () => guarded(async () => {
+    const now = Date.now();
+    download('打刻バックアップ_' + C.fmtDate(now) + '.json', JSON.stringify(backupData(now), null, 1), 'application/json');
+    await Store.setMeta('lastBackupAt', now); renderAdmin(); }) }, '全データをバックアップ(JSON)')));
+  wrap.append(h('hr'), h('p', null, '復元: ファイルを選ぶと、いまのデータはすべてバックアップの内容に置き換わります。'),
+    h('div', { class: 'row' }, file, h('button', { class: 'btn danger', type: 'button', onclick: () => guarded(async () => {
+      const f = file.files && file.files[0]; if (!f) { flash('ファイルを選んでください', true); return; }
+      let o; try { o = JSON.parse(await f.text()); } catch (e) { flash('ファイルを読めませんでした', true); return; }
+      const err = C.validateBackup(o); if (err) { flash(err, true); return; }
+      if (!confirm('いまのデータをすべて消して、このバックアップ(打刻' + o.log.filter(e => e.kind === 'punch').length + '件)に置き換えます。置き換える前に、いまのデータを自動でJSONに保存します(ダウンロードされたファイルを残してください)。よろしいですか?')) return;
+      await Store.reload();
+      const nowB = Date.now(), hh = C.fmtHMS(nowB).replace(/:/g, '');
+      download('打刻バックアップ_復元前の自動保存_' + C.fmtDate(nowB) + '_' + hh + '.json', JSON.stringify(backupData(nowB), null, 1), 'application/json');
+      await new Promise(r => setTimeout(r, 600));          // 保存の動作が始まるのを待ってから上書きする
+      const meta = { staff: o.staff.map(s => ({ id: s.id, name: s.name, active: s.active !== false })), lastBackupAt: Store.meta.lastBackupAt || null, disclaimerAckAt: Store.meta.disclaimerAckAt || null };
+      if (o.meta && o.meta.pin) meta.pin = o.meta.pin;
+      await Store.replaceAll(o.log, meta); S.unlocked = false; S.pends = []; S.repress = false; flash('復元しました。暗証番号は、バックアップを作った時のものです。(復元前のデータは「復元前の自動保存」のファイルに入っています)'); }) }, '復元する')));
+  return wrap;
+}
+
+// --- 暗証番号の変更 ---
+function tabPin() {
+  const a = h('input', { type: 'password', inputmode: 'numeric', maxlength: 4, 'aria-label': '新しい暗証番号', style: 'width:8em' });
+  const b = h('input', { type: 'password', inputmode: 'numeric', maxlength: 4, 'aria-label': '確認', style: 'width:8em' });
+  return h('div', null, h('p', null, '新しい暗証番号(数字4桁)を2回入れます。'), h('div', { class: 'row' }, a, b,
+    h('button', { class: 'btn primary', type: 'button', onclick: () => guarded(async () => {
+      if (!C.isPin(a.value)) { flash('数字4桁で入れてください', true); return; } if (a.value !== b.value) { flash('2回の番号が違います', true); return; }
+      const salt = uid('s'); await Store.setMeta('pin', { salt, hash: C.hashPin(a.value, salt) }); flash('変更しました'); }) }, '変更する')));
+}
+
+// 初めて開いた時に1回、注意書きを出す
+function showDisclaimer() {
+  const box = $('noticeBox'); box.textContent = '';
+  box.append(h('div', { class: 'modal', style: 'z-index:70' }, h('div', { class: 'panel', style: 'max-width:560px;margin-top:12vh' },
+    h('h2', null, 'ご利用の前に'), h('p', null, C.DISCLAIMER),
+    h('p', { class: 'muted' }, '記録はこの端末・このブラウザの中だけに保存されます。1つのURLをブックマークして使い、タブは1つだけ開いてください。プライベートブラウズでは使わないでください。月に1回は管理画面でバックアップを保存してください。'),
+    h('div', { class: 'row' }, h('button', { class: 'btn primary', type: 'button', onclick: () => guarded(async () => { await Store.setMeta('disclaimerAckAt', Date.now()); box.textContent = ''; }) }, '読みました')))));
+}
+
+// ---------- 起動 ----------
+C.TYPE_JA_ = t => (t === 'in' ? '出勤' : '退勤');
+(async function start() {
+  await Store.init();
+  await Store.runProbe();
+  tick(); renderMain();
+  if (!Store.meta.disclaimerAckAt) showDisclaimer();
+  window.__timeclock = { Store, S };    // 動作確認用
+})();
+})();
+</script>
+</body>
+</html>
