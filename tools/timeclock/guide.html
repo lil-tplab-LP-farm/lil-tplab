@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>打刻の使い方</title>
+<style>
+  :root { --in:#1565c0; --out:#c62828; --ink:#2a2f36; --mute:#66707b; --bg:#f3f8fd; --card:#fff;
+    --inbg:#e3f0fc; --outbg:#fdeaea; --warn:#fff6dc; --warnline:#ecd48a; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; padding:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic",Meiryo,sans-serif;
+    line-height:1.85; -webkit-text-size-adjust:100%; }
+  .wrap { max-width:640px; margin:0 auto; padding:14px 14px 40px; }
+  .top { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  a.back { display:inline-block; min-height:44px; line-height:44px; padding:0 16px; border-radius:22px; background:#fff;
+    border:2px solid var(--in); color:var(--in); font-weight:700; text-decoration:none; }
+  .hero { text-align:center; padding:22px 12px 8px; }
+  .hero .emoji { font-size:3rem; line-height:1.2; }
+  .hero h1 { font-size:1.6rem; margin:6px 0 4px; }
+  .hero p { margin:0; color:var(--mute); }
+  .toc { background:var(--card); border-radius:18px; padding:12px 18px; margin:16px 0; box-shadow:0 2px 8px rgba(21,101,192,.08); }
+  .toc b { color:var(--in); }
+  .toc ol { margin:6px 0 0; padding-left:1.4em; }
+  .toc a { color:var(--ink); text-decoration:none; display:inline-block; min-height:32px; }
+  section { background:var(--card); border-radius:20px; padding:16px 18px 14px; margin:16px 0; box-shadow:0 2px 8px rgba(21,101,192,.08); }
+  h2 { font-size:1.2rem; margin:0 0 8px; display:flex; align-items:center; gap:10px; }
+  h2 .no { flex:none; width:2em; height:2em; border-radius:50%; background:var(--in); color:#fff; font-size:.9rem;
+    display:flex; align-items:center; justify-content:center; }
+  h2 .no.r { background:var(--out); }
+  p { margin:8px 0; }
+  ul,ol { margin:6px 0; padding-left:1.4em; }
+  li { margin:4px 0; }
+  .btn-in,.btn-out { display:inline-block; padding:0 .7em; border-radius:10px; color:#fff; font-weight:700; line-height:1.6; }
+  .btn-in { background:var(--in); } .btn-out { background:var(--out); }
+  .chip { display:inline-block; padding:0 .6em; border:1px solid #9aa4af; border-radius:8px; background:#f6f7f9; font-weight:700; line-height:1.6; }
+  .promise { display:flex; gap:12px; align-items:flex-start; background:var(--inbg); border-radius:14px; padding:10px 12px; margin:10px 0; }
+  .promise .ic { font-size:1.7rem; line-height:1.3; flex:none; }
+  .promise b { color:var(--in); }
+  .tip { background:var(--warn); border:1px solid var(--warnline); border-radius:14px; padding:8px 12px; margin:10px 0; }
+  .tip.out { background:var(--outbg); border-color:#eaa9a6; }
+  .tip.in { background:var(--inbg); border-color:#a9c9ee; }
+  details { border-top:1px dashed #cdd6df; padding:6px 0; }
+  details:first-of-type { border-top:none; }
+  summary { cursor:pointer; font-weight:700; min-height:44px; display:flex; align-items:center; }
+  details p { margin:2px 0 8px; }
+  .notice { background:#fff; border:2px dashed var(--warnline); }
+  .foot { text-align:center; color:var(--mute); font-size:.9rem; margin-top:22px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><a class="back" href="./">⏱ 打刻にもどる</a></div>
+
+  <div class="hero">
+    <div class="emoji">⏱️🌷</div>
+    <h1>打刻の使い方</h1>
+    <p>はじめての人も、これを読めば大丈夫です。</p>
+  </div>
+
+  <nav class="toc">
+    <b>もくじ</b>
+    <ol>
+      <li><a href="#s1">これは何?</a></li>
+      <li><a href="#s2">はじめの準備</a></li>
+      <li><a href="#s3">毎日の打刻</a></li>
+      <li><a href="#s4">まちがえた時</a></li>
+      <li><a href="#s5">退勤を押し忘れた時</a></li>
+      <li><a href="#s6">月末のこと</a></li>
+      <li><a href="#s7">バックアップと復元</a></li>
+      <li><a href="#s8">暗証番号を忘れた時</a></li>
+      <li><a href="#s9">よくある質問</a></li>
+      <li><a href="#s10">大事なお知らせ</a></li>
+    </ol>
+  </nav>
+
+  <section id="s1">
+    <h2><span class="no">1</span>これは何?</h2>
+    <p>出勤と退勤の時間を、ボタンを押すだけで記録する道具です。美容師がつくった打刻です。3つの約束があります。</p>
+    <div class="promise"><div class="ic">🕐</div><div><b>時間だけ測ります。</b><br>お給料の計算や、残業の判断はしません。</div></div>
+    <div class="promise"><div class="ic">🔒</div><div><b>記録はこの端末の中だけ。</b><br>どこにも送りません。インターネットにも出ません。</div></div>
+    <div class="promise"><div class="ic">🎁</div><div><b>10人まで無料です。</b><br>使えるスタッフは、休んでいない人で10人までです。</div></div>
+  </section>
+
+  <section id="s2">
+    <h2><span class="no">2</span>はじめの準備</h2>
+    <p>最初に1回だけ、やります。</p>
+    <ol>
+      <li><b>URLをブックマークします。</b><br>いつも同じURL(アドレス)で開いてください。記録は「そのURL」の中に入ります。URLが変わると、別の記録になって、消えたように見えます。</li>
+      <li><b>iPhone・iPadは「ホーム画面に追加」します。</b><br>Safari(アイフォンの標準のブラウザ=ネットを見るアプリ)は、長く開かないと記録を消すことがあります。ホーム画面に追加しておくと安心です。</li>
+      <li><b>下の方の <span class="chip">管理画面</span> を押して、暗証番号を決めます。</b><br>数字4桁を、2つの欄に同じように入れます。これは、まちがって管理画面を開かないためのものです。強い鍵ではありません。</li>
+      <li><b>スタッフを登録します。</b><br>管理画面の「スタッフ」で、名前を入れて <span class="chip">追加</span> を押します。</li>
+    </ol>
+    <div class="tip">💡 同じ端末で、同じブラウザを使ってください。ブラウザが変わると、別の記録になります。</div>
+  </section>
+
+  <section id="s3">
+    <h2><span class="no">3</span>毎日の打刻</h2>
+    <p>ポイントは「<b>先にボタン、あとで名前</b>」です。</p>
+    <ol>
+      <li>まず <span class="btn-in">出勤</span> か <span class="btn-out">退勤</span> を押します。</li>
+      <li>押した時刻が、大きく画面に止まります。</li>
+      <li>「誰ですか?」と出るので、<b>自分の名前</b>を選びます。</li>
+      <li>「◯◯さん 出勤」と出たら、記録できました。🎉</li>
+    </ol>
+    <p>記録される時刻は、<b>ボタンを押した瞬間の時刻</b>です。名前を選ぶのが少し遅くなっても大丈夫です。</p>
+    <div class="tip in">💡 名前を選ばないまま30秒たつと、その分は捨てられます。もう一度ボタンから押してください。</div>
+    <p>出勤を押した時は「いま出勤していない人」、退勤を押した時は「いま出勤中の人」だけが出ます。</p>
+  </section>
+
+  <section id="s4">
+    <h2><span class="no r">4</span>まちがえた時</h2>
+    <ul>
+      <li><b>押してすぐ気づいた時(10秒以内)</b><br>画面の下に「間違えた?」と出ます。<span class="chip">取り消す</span> を押してください。10秒は、名前を選んだ時から数えます。</li>
+      <li><b>他の人の分が残っていた時</b><br>ボタンを押したら、自分より前に押された分が残っていることがあります。「これは◯秒前に押された分です」と出たら、<span class="chip">自分の分を押し直す</span> を押して、あらためて自分で押してください。</li>
+      <li><b>あとから直したい時</b><br>管理画面の <span class="chip">打刻の修正</span> で、時刻を直せます。直した理由も入れます。直したあとも、元の時刻は記録に残ります。</li>
+    </ul>
+    <div class="tip">📝 取り消しも修正も、記録には残ります。あとで見返せるので、安心して使ってください。</div>
+  </section>
+
+  <section id="s5">
+    <h2><span class="no r">5</span>退勤を押し忘れた時</h2>
+    <p>あわてなくて大丈夫です。2つのやり方があります。</p>
+    <ul>
+      <li><b>気づいたその日に:</b> 管理画面の <span class="chip">打刻の修正</span> →「打刻を追加(押し忘れ)」で、本当の退勤時刻と理由を入れて足します。「手入力」として記録に残ります。</li>
+      <li><b>次の日に気づかないまま出勤を押した時:</b> 出勤中のまま12時間たった人は、出勤を押した時の画面に「前回の退勤が未入力の人」として出ます。選ぶと、前回の退勤は空のまま、今日の出勤を記録します。前回の分は、あとで管理画面から足せます。</li>
+    </ul>
+    <p>足していない間、月の勤務表の備考には「未退勤」と出ます。</p>
+  </section>
+
+  <section id="s6">
+    <h2><span class="no">6</span>月末のこと</h2>
+    <p>1か月の勤務表を、CSV(エクセルで開ける表のファイル)で保存できます。</p>
+    <ol>
+      <li>管理画面を開いて <span class="chip">CSV</span> を選びます。</li>
+      <li>月を選びます。</li>
+      <li><span class="chip">月の勤務表をCSVで保存</span> を押します。</li>
+    </ol>
+    <p>文字化けしないで、そのままエクセルで開けます。「打刻の生記録」を保存すると、取り消しや修正も含めた記録がぜんぶ見られます。</p>
+    <div class="tip">🌙 夜をまたぐお仕事も大丈夫。0時をこえた勤務は「出勤した日」の行に1行で入ります。月末の夜(10/31の22時〜11/1の5時など)や大みそかも、出勤した月のCSVに入ります。退勤の欄には日付もつきます。</div>
+  </section>
+
+  <section id="s7">
+    <h2><span class="no">7</span>月に1回のバックアップ</h2>
+    <p>記録はこの端末の中だけにあります。端末をこわしたり、ブラウザのデータを消したりすると、記録も消えます。だから<b>月に1回</b>、コピーを取っておきましょう。</p>
+    <p><b>バックアップのしかた</b></p>
+    <ol>
+      <li>管理画面の <span class="chip">バックアップ</span> を開きます。</li>
+      <li><span class="chip">全データをバックアップ(JSON)</span> を押します。</li>
+      <li>できたファイルを、大事に取っておきます(別の場所にもコピーしておくと、もっと安心です)。</li>
+    </ol>
+    <div class="tip">📱 iPhone・iPadでは、ファイルは「ファイル」アプリの「ダウンロード」に入ります。ファイル名は「打刻バックアップ_日付.json」です。<br>💻 パソコンでは「ダウンロード」フォルダに入ります。</div>
+    <ol style="display:none">
+    </ol>
+    <p><b>復元のしかた</b>(コピーから元にもどす)</p>
+    <ol>
+      <li>管理画面の <span class="chip">バックアップ</span> を開きます。</li>
+      <li>ファイルを選んで <span class="chip">復元する</span> を押します。</li>
+      <li>確認が出たら、よく読んで進みます。</li>
+    </ol>
+    <div class="tip out">⚠️ 復元すると、いまの記録はバックアップの内容に置きかわります。置きかえる前に、いまの分が自動でファイルに保存されます。そのファイルは消さずに残してください。</div>
+    <p>暗証番号は、復元しても「いまの番号」のままです。</p>
+  </section>
+
+  <section id="s8">
+    <h2><span class="no r">8</span>暗証番号を忘れた時</h2>
+    <p>だいじょうぶ。記録は消えません。</p>
+    <ol>
+      <li>管理画面を開いて、番号の入力画面で <span class="chip">番号を忘れた</span> を押します。</li>
+      <li>確認の欄に「作り直す」と打ちます。</li>
+      <li>新しい番号(数字4桁)を、2回入れます。</li>
+      <li><span class="chip">作り直す</span> を押します。</li>
+      <li>「作り直しました」と出たら、新しい番号で開き直します。</li>
+    </ol>
+    <p>スタッフも打刻の記録も、そのまま残ります。</p>
+    <div class="tip">📝 作り直した日時は、記録に残ります。管理画面の上に、30日のあいだ「◯月◯日 ◯:◯◯ に暗証番号を作り直しました」と出ます。</div>
+  </section>
+
+  <section id="s9">
+    <h2><span class="no">9</span>よくある質問</h2>
+    <details>
+      <summary>記録が消えた?</summary>
+      <p>たいていは、別のURLや別のブラウザで開いているだけです。記録は「その端末・そのブラウザ・そのURL」ごとに別になっています。いつものURLとブラウザで開き直してみてください。それでも無い時は、バックアップから復元できます。</p>
+    </details>
+    <details>
+      <summary>別の端末でも見たい</summary>
+      <p>端末をまたいで自動でそろえることは、今はできません。見たい時は、バックアップのファイルを作って、もう一方の端末で復元してください。同時に両方で打刻すると、別々の記録になるのでご注意ください。</p>
+    </details>
+    <details>
+      <summary>プライベートブラウズ(シークレットモード)でも使える?</summary>
+      <p>使わないでください。画面は動きますが、閉じると記録がぜんぶ消えます。</p>
+    </details>
+    <details>
+      <summary>タブはいくつまで?</summary>
+      <p>1つだけ開いてください。2つ開くと、片方の表示が古くなることがあります。</p>
+    </details>
+    <details>
+      <summary>休み明けに「端末の時計を確認してください」と出るのはなぜ?</summary>
+      <p>前の打刻から3日以上あとに押すと、「時計がずれていませんか?」と聞きます。休み明けなら、そのまま記録して大丈夫です。同じ日は、2回目から出ません。(前の打刻より前の時刻になる時も、同じ確認が出ます。)</p>
+    </details>
+    <details>
+      <summary>11人以上は使える?</summary>
+      <p>今は10人までです。お休みしている人を「休止」にすると、数に入りません。</p>
+    </details>
+    <details>
+      <summary>記録が残っているか心配</summary>
+      <p>画面の上に「保存テスト」の結果と「バックアップ最終日」が出ています。保存テストが赤く出たら、別のブラウザで開き直してください。</p>
+    </details>
+  </section>
+
+  <section>
+    <h2><span class="no">💌</span>ご意見ください</h2>
+    <p>使いにくい所や「ここをこうしてほしい」があれば、noteのコメントかDMで気軽に教えてください。</p>
+  </section>
+
+  <section id="s10" class="notice">
+    <h2><span class="no r">!</span>大事なお知らせ</h2>
+    <p>これは簡易な打刻の道具です。出勤簿・賃金台帳など法令で求められる記録として使えることは保証しません。時刻は端末の時計で、修正や書き換えを完全には防げません。必要な保存や計算は、ご自身(必要なら社労士など)で確認してください。</p>
+    <p>これは記録の道具です。労務の判断(残業・休憩・給与の計算など)はしません。</p>
+  </section>
+
+  <div class="top" style="justify-content:center"><a class="back" href="./">⏱ 打刻にもどる</a></div>
+  <p class="foot">美容師がつくった打刻 🌷</p>
+</div>
+</body>
+</html>

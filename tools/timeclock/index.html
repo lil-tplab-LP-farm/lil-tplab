@@ -50,6 +50,7 @@
   footer { padding:14px; font-size:.82rem; color:var(--mute); max-width:1100px; width:100%; margin:0 auto; }
   footer ul { margin:6px 0 10px; padding-left:1.2em; }
   .admin-link { background:none; border:1px solid var(--line); border-radius:8px; padding:10px 16px; color:var(--mute); min-height:44px; }
+  .guide-link { display:inline-block; margin-left:12px; font-size:.82rem; color:var(--mute); text-decoration:underline; padding:12px 6px; }
   .modal { position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:60; overflow:auto; padding:10px; }
   .panel { background:#fff; border-radius:14px; max-width:960px; margin:0 auto; padding:14px; }
   .panel header { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:10px; }
@@ -85,6 +86,7 @@
     <li>これは記録の道具です。労務の判断(残業・休憩・給与の計算など)はしません。</li>
   </ul>
   <button class="admin-link" id="adminBtn" type="button">管理画面</button>
+  <a class="guide-link" href="guide.html">使い方</a>
 </footer>
 <div id="resultBox"></div>
 <div id="undoBox"></div>
@@ -313,7 +315,24 @@ function rawRows(punches, month, staffList) {
 }
 
 function monthlyCSV(punches, month, staffList) { return toCSV(SHEET_HEADER, monthlySheetRows(punches, month, staffList)); }
-function rawCSV(punches, month, staffList) { return toCSV(RAW_HEADER, rawRows(punches, month, staffList)); }
+// 暗証番号の作り直しも生記録に1行出す(log を渡した時だけ)
+function rawCSV(punches, month, staffList, log) {
+  const rows = rawRows(punches, month, staffList);
+  const resets = (log || []).filter(e => e.kind === 'pinreset' && typeof e.at === 'number' && monthKey(e.at) === month)
+    .map(e => [fmtDateTime(e.at), '(管理画面)', '暗証番号を作り直し', '', '']);
+  return toCSV(RAW_HEADER, rows.concat(resets).sort((a, b) => a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
+}
+
+// ---- 暗証番号を作り直した記録 ----
+const PIN_RESET_NOTICE_DAYS = 30;
+function pinResetNotice(log, now) {
+  let last = null;
+  for (const e of log || []) if (e && e.kind === 'pinreset' && typeof e.at === 'number' && (last === null || e.at > last)) last = e.at;
+  if (last === null || now - last > PIN_RESET_NOTICE_DAYS * 86400000 || now < last) return null;
+  return fmtDateTime(last).slice(5, 16).replace(/^0/, '').replace('-', '月').replace(/^(\d+月)0?/, '$1').replace(' ', '日 ') + ' に暗証番号を作り直しました';
+}
+// 復元した時の番号: いまの番号があればそれを残す。無い端末だけバックアップの番号を使う
+function pinAfterRestore(currentPin, backupPin) { return currentPin || backupPin || null; }
 
 // ---- 暗証番号(誤操作よけ。強い防御ではない) ----
 function hashPin(pin, salt) {
@@ -331,7 +350,7 @@ function validateBackup(o) {
   if (o.app !== 'timeclock') return 'この道具のバックアップではありません';
   if (!Array.isArray(o.log) || !Array.isArray(o.staff)) return 'データが足りません';
   for (const e of o.log) {
-    if (!e || !['punch', 'correct', 'undo'].includes(e.kind)) return '記録の形が正しくありません';
+    if (!e || !['punch', 'correct', 'undo', 'pinreset'].includes(e.kind)) return '記録の形が正しくありません';
     if (e.kind === 'punch' && (typeof e.ts !== 'number' || !e.id || !e.staffId || !['in', 'out'].includes(e.type))) return '打刻の形が正しくありません';
     if (e.kind === 'correct' && (typeof e.newTs !== 'number' || !e.targetId)) return '修正の形が正しくありません';
     if (e.kind === 'undo' && !e.targetId) return '取り消しの形が正しくありません';
@@ -345,7 +364,7 @@ const Core = { MAX_STAFF, UNDO_MS, PENDING_MS, STALE_OPEN_MS, CLOCK_AHEAD_MS, MA
   staleOpen, fmtElapsed, undoDeadline, clockWarning, sequenceProblems, prunePendings, addPending,
   maxStaff, makePending, pendingExpired, candidatesFor, fmtDate, fmtHMS, fmtTime, fmtDateTime, fmtHM, fmtDateJa, monthKey, toInputValue, parseLocalDateTime,
   effectivePunches, pairShifts, shiftMinutes, staffStatus, validatePunch, validateStaffName, canActivateMore,
-  csvCell, toCSV, monthlySheetRows, rawRows, monthlyCSV, rawCSV, hashPin, isPin, validateBackup, daysSince, SHEET_HEADER, RAW_HEADER };
+  csvCell, toCSV, monthlySheetRows, rawRows, monthlyCSV, rawCSV, pinResetNotice, pinAfterRestore, hashPin, isPin, validateBackup, daysSince, SHEET_HEADER, RAW_HEADER };
 // ==CORE_END==
 </script>
 
@@ -647,8 +666,8 @@ function undoPunch(punchId, staffId) {
 }
 
 // ---------- 管理画面 ----------
-$('adminBtn').addEventListener('click', () => { S.adminOpen = true; S.unlocked = false; renderAdmin(); });
-function closeAdmin() { S.adminOpen = false; S.unlocked = false; S.editing = null; S.msg = null; $('adminBox').textContent = ''; renderMain(); }
+$('adminBtn').addEventListener('click', () => { S.adminOpen = true; S.unlocked = false; S.forgot = false; renderAdmin(); });
+function closeAdmin() { S.adminOpen = false; S.unlocked = false; S.forgot = false; S.editing = null; S.msg = null; $('adminBox').textContent = ''; renderMain(); }
 
 function renderAdmin() {
   const box = $('adminBox'); box.textContent = '';
@@ -680,12 +699,35 @@ function pinForm() {
     h('p', null, first ? '初めに、暗証番号(数字4桁)を決めてください。' : '暗証番号(数字4桁)を入れてください。'),
     h('div', { class: 'row' }, p1, first ? p2 : null, h('button', { class: 'btn primary', type: 'button', onclick: go }, first ? '決める' : '開く')),
     first ? h('p', { class: 'muted' }, '2つの欄に同じ番号を入れます。この番号は、間違って管理画面を開かないためのものです。強い鍵ではありません。') : null,
-    h('p', { class: 'muted' }, '忘れたとき: この画面では番号を再設定できません。次の手順になります。①バックアップのファイル(JSON)があるか確かめる(無いと、この端末の記録は戻せません)。②別のブラウザ、またはブラウザのデータを消した状態でこのページを開き、新しい暗証番号を決める。③管理画面の「バックアップ」から、①のファイルを復元する。復元すると、番号はバックアップを作った時のものに戻ります。※ブラウザのデータを消すと、この端末の今の記録は消えます。'));
+    first ? null : (S.forgot ? forgotForm() : h('div', { class: 'row' }, h('button', { class: 'btn', type: 'button', onclick: () => { S.forgot = true; S.msg = null; renderAdmin(); } }, '番号を忘れた'))),
+    h('p', { class: 'muted' }, '忘れたとき: 「番号を忘れた」から、その場で作り直せます。記録はそのまま残ります。'));
+}
+
+// 番号を忘れた時: 記録・スタッフはそのまま、番号だけ作り直す。作り直した日時は記録に残る
+function forgotForm() {
+  const ok = h('input', { type: 'text', autocomplete: 'off', 'aria-label': '確認(作り直す、と入力)', style: 'width:8em', placeholder: '作り直す' });
+  const a = h('input', { type: 'password', inputmode: 'numeric', maxlength: 4, autocomplete: 'off', 'aria-label': '新しい暗証番号', style: 'width:8em' });
+  const b = h('input', { type: 'password', inputmode: 'numeric', maxlength: 4, autocomplete: 'off', 'aria-label': '新しい暗証番号(確認)', style: 'width:8em' });
+  return h('div', null,
+    h('p', null, '記録はそのまま残ります。番号だけ作り直します。作り直したことは記録に残り、管理画面に表示されます。'),
+    h('p', null, '確認のため、下の欄に「作り直す」と打ってください。'), h('div', { class: 'row' }, ok),
+    h('p', null, '新しい番号(数字4桁)を2回入れます。'),
+    h('div', { class: 'row' }, a, b,
+      h('button', { class: 'btn primary', type: 'button', onclick: () => guarded(async () => {
+        if (ok.value.trim() !== '作り直す') { flash('確認の欄に「作り直す」と打ってください', true); return; }
+        if (!C.isPin(a.value)) { flash('数字4桁で入れてください', true); return; }
+        if (a.value !== b.value) { flash('2回の番号が違います', true); return; }
+        await Store.append({ kind: 'pinreset', at: Date.now() });
+        const salt = uid('s'); await Store.setMeta('pin', { salt, hash: C.hashPin(a.value, salt) });
+        S.forgot = false; flash('作り直しました。新しい番号で開いてください。'); }) }, '作り直す'),
+      h('button', { class: 'btn', type: 'button', onclick: () => { S.forgot = false; S.msg = null; renderAdmin(); } }, 'やめる')));
 }
 
 function adminTabs() {
   const tabs = [['staff', 'スタッフ'], ['fix', '打刻の修正'], ['csv', 'CSV'], ['backup', 'バックアップ'], ['pin', '暗証番号']];
   const wrap = h('div');
+  const pn = C.pinResetNotice(Store.log, Date.now());
+  if (pn) wrap.append(h('div', { class: 'banner' }, pn));
   wrap.append(h('div', { class: 'tabs' }, tabs.map(([k, l]) => h('button', { type: 'button', class: S.tab === k ? 'on' : '', onclick: () => { S.tab = k; S.msg = null; S.editing = null; renderAdmin(); } }, l))));
   wrap.append({ staff: tabStaff, fix: tabFix, csv: tabCsv, backup: tabBackup, pin: tabPin }[S.tab]());
   wrap.append(h('p', { class: 'muted' }, '保存先: ' + ({ indexeddb: 'このブラウザ(IndexedDB)', localstorage: 'このブラウザ(localStorage)', memory: '保存できません(メモリのみ)' }[Store.mode]) + ' / 時刻はこの端末の時計 / 労務の判断はしません。'));
@@ -811,7 +853,7 @@ function tabCsv() {
   wrap.append(h('p', { class: 'muted' }, 'UTF-8(BOM付き)です。Excelでそのまま開けます。退勤が無い日は退勤欄が空で、備考に「未退勤」と出ます。出勤日がこの月の勤務を載せます。'));
   wrap.append(h('div', { class: 'row' },
     h('button', { class: 'btn primary', type: 'button', onclick: () => download('打刻_' + S.month + '.csv', '﻿' + C.monthlyCSV(punches, S.month, staff), 'text/csv;charset=utf-8') }, '月の勤務表をCSVで保存'),
-    h('button', { class: 'btn', type: 'button', onclick: () => download('打刻_生記録_' + S.month + '.csv', '﻿' + C.rawCSV(punches, S.month, staff), 'text/csv;charset=utf-8') }, '打刻の生記録をCSVで保存')));
+    h('button', { class: 'btn', type: 'button', onclick: () => download('打刻_生記録_' + S.month + '.csv', '﻿' + C.rawCSV(punches, S.month, staff, Store.log), 'text/csv;charset=utf-8') }, '打刻の生記録をCSVで保存')));
   const rows = C.monthlySheetRows(punches, S.month, staff);
   wrap.append(h('p', { class: 'muted' }, 'この月の勤務: ' + rows.length + '行(下は先頭10行のプレビュー)'));
   if (rows.length) wrap.append(h('div', { class: 'tablewrap' }, h('table', null, h('thead', null, h('tr', null, C.SHEET_HEADER.map(t => h('th', null, t)))),
@@ -841,8 +883,9 @@ function tabBackup() {
       download('打刻バックアップ_復元前の自動保存_' + C.fmtDate(nowB) + '_' + hh + '.json', JSON.stringify(backupData(nowB), null, 1), 'application/json');
       await new Promise(r => setTimeout(r, 600));          // 保存の動作が始まるのを待ってから上書きする
       const meta = { staff: o.staff.map(s => ({ id: s.id, name: s.name, active: s.active !== false })), lastBackupAt: Store.meta.lastBackupAt || null, disclaimerAckAt: Store.meta.disclaimerAckAt || null };
-      if (o.meta && o.meta.pin) meta.pin = o.meta.pin;
-      await Store.replaceAll(o.log, meta); S.unlocked = false; S.pends = []; S.repress = false; flash('復元しました。暗証番号は、バックアップを作った時のものです。(復元前のデータは「復元前の自動保存」のファイルに入っています)'); }) }, '復元する')));
+      const keptPin = C.pinAfterRestore(Store.meta.pin, o.meta && o.meta.pin);
+      if (keptPin) meta.pin = keptPin;
+      await Store.replaceAll(o.log, meta); S.unlocked = false; S.pends = []; S.repress = false; flash('復元しました。暗証番号は、いまの番号のままです。(復元前のデータは「復元前の自動保存」のファイルに入っています)'); }) }, '復元する')));
   return wrap;
 }
 
