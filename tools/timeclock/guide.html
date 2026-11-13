@@ -32,8 +32,8 @@
   p { margin:8px 0; }
   ul,ol { margin:6px 0; padding-left:1.4em; }
   li { margin:4px 0; }
-  .btn-in,.btn-out { display:inline-block; padding:0 .7em; border-radius:10px; color:#fff; font-weight:700; line-height:1.6; }
-  .btn-in { background:var(--in); } .btn-out { background:var(--out); }
+  .btn-in,.btn-out,.btn-brk,.btn-bak { display:inline-block; padding:0 .7em; border-radius:10px; color:#fff; font-weight:700; line-height:1.6; }
+  .btn-in { background:var(--in); } .btn-out { background:var(--out); } .btn-brk { background:#2e7d32; } .btn-bak { background:#1976d2; }
   .chip { display:inline-block; padding:0 .6em; border:1px solid #9aa4af; border-radius:8px; background:#f6f7f9; font-weight:700; line-height:1.6; }
   .promise { display:flex; gap:12px; align-items:flex-start; background:var(--inbg); border-radius:14px; padding:10px 12px; margin:10px 0; }
   .promise .ic { font-size:1.7rem; line-height:1.3; flex:none; }
@@ -106,7 +106,13 @@
     </ol>
     <p>記録される時刻は、<b>ボタンを押した瞬間の時刻</b>です。名前を選ぶのが少し遅くなっても大丈夫です。</p>
     <div class="tip in">💡 名前を選ばないまま30秒たつと、その分は捨てられます。もう一度ボタンから押してください。</div>
-    <p>出勤を押した時は「いま出勤していない人」、退勤を押した時は「いま出勤中の人」だけが出ます。</p>
+    <p>出勤を押した時は「いま出勤していない人」、退勤を押した時は「いま出勤中の人」、休憩を押した時は「出勤中で休憩中でない人」だけが出ます。</p>
+    <p><b>休憩のとき</b>も同じです。</p>
+    <ol>
+      <li>休憩に入る時は <span class="btn-brk">休憩</span> を押して、自分の名前を選びます。</li>
+      <li>休憩から戻ったら <span class="btn-bak">戻り</span> を押して、自分の名前を選びます。(これで勤務にもどります。<span class="btn-bak">戻り</span> の名前の候補は、休憩中の人だけです)</li>
+      <li>休憩中のまま <span class="btn-out">退勤</span> を押した時は、退勤の時刻で休憩も終わったことになります。(勤務表の備考に「休憩戻りなし→退勤で終了」と出ます)</li>
+    </ol>
   </section>
 
   <section id="s4">
@@ -138,6 +144,7 @@
       <li><span class="chip">月の勤務表をCSVで保存</span> を押します。</li>
     </ol>
     <p>文字化けしないで、そのままエクセルで開けます。「打刻の生記録」を保存すると、取り消しや修正も含めた記録がぜんぶ見られます。</p>
+    <p>勤務表には、「勤務時間」のほかに <b>休憩入り・休憩戻り</b>(休憩に入った時刻と戻った時刻。休憩が何回かある時は「12:00 / 15:10」のように1つの欄に並べます)、<b>休憩(分)</b> と <b>実働(時:分)・実働(分)</b> の列があります。休憩は、1回の勤務で何回あっても合計します。実働は「勤務時間 − 休憩の合計」です。休憩の時間を測って並べるだけで、休憩が足りているかなどの判断はしません。</p>
     <div class="tip">🌙 夜をまたぐお仕事も大丈夫。0時をこえた勤務は「出勤した日」の行に1行で入ります。月末の夜(10/31の22時〜11/1の5時など)や大みそかも、出勤した月のCSVに入ります。退勤の欄には日付もつきます。</div>
   </section>
 
@@ -217,7 +224,7 @@
   <section id="s10" class="notice">
     <h2><span class="no r">!</span>大事なお知らせ</h2>
     <p>これは簡易な打刻の道具です。出勤簿・賃金台帳など法令で求められる記録として使えることは保証しません。時刻は端末の時計で、修正や書き換えを完全には防げません。必要な保存や計算は、ご自身(必要なら社労士など)で確認してください。</p>
-    <p>これは記録の道具です。労務の判断(残業・休憩・給与の計算など)はしません。</p>
+    <p>これは記録の道具です。休憩の時間は測りますが、労務の判断(休憩が足りているか、残業・給与の計算など)はしません。</p>
   </section>
 
   <div class="top" style="justify-content:center"><a class="back" href="./">⏱ 打刻にもどる</a></div>

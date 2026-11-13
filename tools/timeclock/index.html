@@ -6,7 +6,7 @@
 <meta name="robots" content="noindex">
 <title>出退勤の打刻</title>
 <style>
-  :root { --in:#1565c0; --out:#c62828; --ink:#1b1f24; --mute:#5b6570; --line:#d5dae0; --bg:#f4f6f8; --card:#fff; --warn:#fff3cd; }
+  :root { --in:#1565c0; --out:#c62828; --brk:#2e7d32; --ink:#1b1f24; --mute:#5b6570; --line:#d5dae0; --bg:#f4f6f8; --card:#fff; --warn:#fff3cd; }
   * { box-sizing:border-box; }
   html,body { margin:0; padding:0; background:var(--bg); color:var(--ink);
     font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif; }
@@ -33,16 +33,22 @@
   .actions { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:14px 0; }
   .act { min-height:120px; border:none; border-radius:16px; color:#fff; font-size:clamp(1.6rem,7vw,2.6rem); font-weight:700; }
   .act.in { background:var(--in); } .act.out { background:var(--out); }
+  .act.brk, .act.bak { min-height:76px; font-size:clamp(1.2rem,5vw,1.8rem); }
+  .act.brk { background:var(--brk); } .act.bak { background:#1976d2; }
+  .staff .brk-mark { display:inline-block; margin-top:4px; padding:1px 8px; border-radius:6px; background:var(--brk); color:#fff; font-size:.78rem; font-weight:700; }
+  .staff.onbreak { border-color:var(--brk); background:#e8f5e9; }
+  .staff.onbreak .st { color:var(--brk); font-weight:700; }
   .act:disabled { background:#c3c9d0; color:#f4f4f4; }
   .act small { display:block; font-size:.9rem; font-weight:400; margin-top:4px; }
   .hint { color:var(--mute); margin:10px 0; }
   .frozen { border-radius:16px; color:#fff; padding:16px; text-align:center; font-size:clamp(1.6rem,7vw,3rem); font-weight:700; margin:6px 0 14px; }
-  .frozen.in { background:var(--in); } .frozen.out { background:var(--out); }
+  .frozen.in { background:var(--in); } .frozen.out { background:var(--out); } .frozen.bin { background:var(--brk); } .frozen.bout { background:#1976d2; }
   .frozen .t { font-family:ui-monospace,Menlo,Consolas,monospace; font-variant-numeric:tabular-nums; }
   .frozen small { display:block; font-size:.9rem; font-weight:400; margin-top:4px; }
   .overlay-result { position:fixed; left:12px; right:12px; top:12px; z-index:50; border-radius:16px; color:#fff; padding:18px;
     text-align:center; font-size:clamp(1.4rem,6vw,3rem); font-weight:700; box-shadow:0 8px 30px rgba(0,0,0,.35); }
   .overlay-result.in { background:var(--in); } .overlay-result.out { background:var(--out); }
+  .overlay-result.bin { background:var(--brk); } .overlay-result.bout { background:#1976d2; }
   .overlay-result .t { font-family:ui-monospace,Menlo,Consolas,monospace; display:block; }
   .undo-bar { position:fixed; left:12px; right:12px; bottom:12px; z-index:49; background:#fff; border:2px solid #444; border-radius:12px;
     padding:10px; display:flex; gap:10px; align-items:center; justify-content:space-between; }
@@ -67,6 +73,7 @@
   .tablewrap { overflow-x:auto; }
   .tag { display:inline-block; padding:1px 6px; border-radius:6px; font-size:.78rem; background:#eee; }
   .tag.in { background:#dbe9fb; color:var(--in); } .tag.out { background:#fbdcdb; color:var(--out); }
+  .tag.bin, .tag.bout { background:#dcefdd; color:var(--brk); }
   .muted { color:var(--mute); font-size:.85rem; }
   .hidden { display:none !important; }
   @media (max-width:420px) { .actions { gap:8px; } .act { min-height:104px; } }
@@ -83,7 +90,7 @@
   <ul>
     <li>時刻は、この端末の時計を使っています。</li>
     <li>記録は、この端末の中だけにあります。ブラウザのデータを消すと消えます。月に1回は、管理画面でバックアップを保存してください。</li>
-    <li>これは記録の道具です。労務の判断(残業・休憩・給与の計算など)はしません。</li>
+    <li>これは記録の道具です。休憩の時間は測りますが、労務の判断(休憩が足りているか、残業・給与の計算など)はしません。</li>
   </ul>
   <button class="admin-link" id="adminBtn" type="button">管理画面</button>
   <a class="guide-link" href="guide.html">使い方</a>
@@ -156,6 +163,9 @@ function sortedLive(punches) {
 }
 
 // 出勤→退勤を組にする。日またぎは出勤日の勤務。同じ日に2回出退勤すれば2行。
+// 休憩入り('bin')・休憩戻り('bout')は、出勤と退勤のあいだの休憩。1回の勤務に何回あってもよい。
+// 休憩中のまま退勤('out')した時は、退勤の時刻で休憩も終わったことにする(breakAutoEnd)。
+function newShift(staffId, inTs, outTs, mod) { return { staffId, inTs, outTs, modified: mod, breaks: [], openBreak: null, breakAutoEnd: false }; }
 function pairShifts(punches) {
   const byStaff = new Map();
   for (const p of sortedLive(punches)) {
@@ -169,11 +179,16 @@ function pairShifts(punches) {
       const mod = p.corrected || p.manual;
       if (p.type === 'in') {
         if (open) shifts.push(open);                // 退勤が無いまま次の出勤 → 前の勤務は未退勤
-        open = { staffId, inTs: p.ts, outTs: null, modified: mod };
-      } else if (open) {
+        open = newShift(staffId, p.ts, null, mod);
+      } else if (p.type === 'bin') {
+        if (open && open.openBreak == null) { open.openBreak = p.ts; open.modified = open.modified || mod; }
+      } else if (p.type === 'bout') {
+        if (open && open.openBreak != null) { open.breaks.push([open.openBreak, p.ts]); open.openBreak = null; open.modified = open.modified || mod; }
+      } else if (open) {                            // 退勤
+        if (open.openBreak != null) { open.breaks.push([open.openBreak, p.ts]); open.openBreak = null; open.breakAutoEnd = true; }
         open.outTs = p.ts; open.modified = open.modified || mod; shifts.push(open); open = null;
       } else {
-        shifts.push({ staffId, inTs: null, outTs: p.ts, modified: mod });   // 出勤の無い退勤
+        shifts.push(newShift(staffId, null, p.ts, mod));   // 出勤の無い退勤
       }
     }
     if (open) shifts.push(open);
@@ -183,11 +198,21 @@ function pairShifts(punches) {
 
 function shiftDateTs(s) { return s.inTs ?? s.outTs; }
 function shiftMinutes(s) { return (s.inTs != null && s.outTs != null) ? Math.floor((s.outTs - s.inTs) / 60000) : null; }
+// 休憩の合計(分)。休憩が何回あっても足す
+function shiftBreakMinutes(s) { return Math.floor((s.breaks || []).reduce((a, b) => a + (b[1] - b[0]), 0) / 60000); }
 
+// 1人の「いま」。working=出勤中(休憩中も含む) / onBreak=休憩中 / since=出勤した時刻 / breakSince=休憩に入った時刻
 function staffStatus(punches, staffId) {
   const live = sortedLive(punches).filter(p => p.staffId === staffId);
+  let working = false, onBreak = false, since = null, breakSince = null;
+  for (const p of live) {
+    if (p.type === 'in') { working = true; onBreak = false; since = p.ts; breakSince = null; }
+    else if (p.type === 'out') { working = false; onBreak = false; since = null; breakSince = null; }
+    else if (p.type === 'bin') { if (working && !onBreak) { onBreak = true; breakSince = p.ts; } }
+    else if (p.type === 'bout') { if (onBreak) { onBreak = false; breakSince = null; } }
+  }
   const last = live[live.length - 1];
-  return last && last.type === 'in' ? { working: true, since: last.ts, lastId: last.id } : { working: false, since: null, lastId: last ? last.id : null };
+  return { working, onBreak, since, breakSince, lastId: last ? last.id : null };
 }
 
 // 打刻してよいか。OK なら null、だめなら理由の文字列
@@ -195,10 +220,13 @@ function staffStatus(punches, staffId) {
 // opts.allowClockBack: 前回の打刻より前の時刻でも、確認済みとして認める
 function validatePunch(punches, staffId, type, ts, opts) {
   opts = opts || {};
-  if (type !== 'in' && type !== 'out') return '種類が正しくありません';
+  if (!['in', 'out', 'bin', 'bout'].includes(type)) return '種類が正しくありません';
   const st = staffStatus(punches, staffId);
   if (type === 'in' && st.working && !(opts.allowStaleIn && ts - st.since >= STALE_OPEN_MS)) return '出勤中です(退勤だけ押せます)';
   if (type === 'out' && !st.working) return 'まだ出勤していません(出勤だけ押せます)';
+  if (type === 'bin' && !st.working) return 'まだ出勤していません(出勤だけ押せます)';
+  if (type === 'bin' && st.onBreak) return '休憩中です(休憩戻りだけ押せます)';
+  if (type === 'bout' && !st.onBreak) return '休憩中ではありません';
   const live = sortedLive(punches).filter(p => p.staffId === staffId);
   const last = live[live.length - 1];
   if (last && ts < last.ts && !opts.allowClockBack) return '端末の時計が、前回の打刻より前になっています。時計を確認してください';
@@ -231,11 +259,12 @@ function clockWarning(punches, staffId, ts) {
 
 // 1人の出勤・退勤の並びの乱れの数(退勤が出勤なしで出る/出勤が連続)。修正・追加の保存前の警告に使う
 function sequenceProblems(punches, staffId) {
-  let prev = null, n = 0;
+  let working = false, onBreak = false, n = 0;
   for (const p of sortedLive(punches).filter(x => x.staffId === staffId)) {
-    if (p.type === 'out' && prev !== 'in') n++;
-    if (p.type === 'in' && prev === 'in') n++;
-    prev = p.type;
+    if (p.type === 'in') { if (working) n++; working = true; onBreak = false; }
+    else if (p.type === 'out') { if (!working) n++; working = false; onBreak = false; }
+    else if (p.type === 'bin') { if (!working || onBreak) n++; else onBreak = true; }
+    else if (p.type === 'bout') { if (!onBreak) n++; onBreak = false; }
   }
   return n;
 }
@@ -248,11 +277,16 @@ function pendingExpired(pending, now) { return !pending || (now - pending.ts) >=
 // 保留は最大 MAX_PENDINGS 件。期限切れは除き、新しいものを足す(あふれたら古いものから落とす)
 function prunePendings(list, now) { return list.filter(p => !pendingExpired(p, now)); }
 function addPending(list, p, now) { const l = prunePendings(list, now).concat([p]); return l.slice(Math.max(0, l.length - MAX_PENDINGS)); }
-// 名前の候補。出勤を押した時は「いま出勤していない人」、退勤を押した時は「いま出勤中の人」だけ。
+// 名前の候補。出勤=いま出勤していない人 / 退勤=出勤中の人(休憩中も含む) / 休憩=出勤中で休憩中でない人 / 戻り=休憩中の人だけ。
 function candidatesFor(punches, activeStaff, type) {
-  return activeStaff.filter(s => C_staffWorking(punches, s.id) === (type === 'out'));
+  return activeStaff.filter(s => {
+    const st = staffStatus(punches, s.id);
+    if (type === 'in') return !st.working;
+    if (type === 'bin') return st.working && !st.onBreak;
+    if (type === 'bout') return st.onBreak;
+    return st.working;
+  });
 }
-function C_staffWorking(punches, staffId) { return staffStatus(punches, staffId).working; }
 
 // ---- 名前・人数 ----
 function validateStaffName(name, staffList, selfId) {
@@ -274,9 +308,9 @@ function csvCell(v) {
 }
 function toCSV(header, rows) { return [header, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n'; }
 
-const SHEET_HEADER = ['日付', 'スタッフ名', '出勤時刻', '退勤時刻', '勤務時間(時:分)', '勤務時間(分)', '修正あり', '備考'];
+const SHEET_HEADER = ['日付', 'スタッフ名', '出勤時刻', '退勤時刻', '勤務時間(時:分)', '勤務時間(分)', '休憩入り', '休憩戻り', '休憩(分)', '実働(時:分)', '実働(分)', '修正あり', '備考'];
 const RAW_HEADER = ['日時(ミリ秒)', 'スタッフ名', '種類', '修正前の時刻', '修正理由'];
-const TYPE_JA = { in: '出勤', out: '退勤' };
+const TYPE_JA = { in: '出勤', out: '退勤', bin: '休憩入り', bout: '休憩戻り' };
 
 function staffNameMap(staffList) { const m = new Map(); staffList.forEach((s, i) => m.set(s.id, { name: s.name, order: i })); return m; }
 
@@ -289,13 +323,27 @@ function monthlySheetRows(punches, month, staffList) {
   shifts.sort((a, b) => fmtDate(shiftDateTs(a)).localeCompare(fmtDate(shiftDateTs(b))) || od(a.staffId) - od(b.staffId) || shiftDateTs(a) - shiftDateTs(b));
   return shifts.map(s => {
     const min = shiftMinutes(s);
+    const brk = shiftBreakMinutes(s);
+    const work = min != null ? Math.max(0, min - brk) : null;      // 実働 = 勤務時間 - 休憩の合計
     let outText = '', note = '';
     if (s.outTs != null) outText = (s.inTs != null && fmtDate(s.outTs) !== fmtDate(s.inTs)) ? fmtDate(s.outTs) + ' ' + fmtHMS(s.outTs) : fmtHMS(s.outTs);
+    // 休憩の時刻。複数回は「 / 」で並べる(入りと戻りは同じ順)。日をまたいだ時刻は日付つき。戻りが無い休憩入りは戻り欄を空にする
+    const base = s.inTs != null ? s.inTs : s.outTs;
+    const hhmm = t => (fmtDate(t) !== fmtDate(base) ? fmtDate(t) + ' ' : '') + fmtHMS(t).slice(0, 5);
+    const brIn = (s.breaks || []).map(b => hhmm(b[0])).concat(s.openBreak != null ? [hhmm(s.openBreak)] : []).join(' / ');
+    const brOut = (s.breaks || []).map(b => hhmm(b[1])).join(' / ');
     if (s.outTs == null) note = '未退勤';
     if (s.inTs == null) note = '出勤の記録なし';
     if (min != null && min > 1440) note = '24時間超';
+    const extra = [];
+    if (s.breakAutoEnd) extra.push('休憩戻りなし→退勤で終了');
+    if (s.openBreak != null) extra.push('休憩戻りなし');          // 休憩に入ったまま、退勤も無い
+    if (extra.length) note = note ? note + ' / ' + extra.join(' / ') : extra.join(' / ');
     return [fmtDate(shiftDateTs(s)), nm(s.staffId), s.inTs != null ? fmtHMS(s.inTs) : '', outText,
-      min != null ? fmtHM(min) : '', min != null ? min : '', s.modified ? 'あり' : '', note];
+      min != null ? fmtHM(min) : '', min != null ? min : '',
+      brIn, brOut,
+      (min != null || brk > 0) ? brk : '', work != null ? fmtHM(work) : '', work != null ? work : '',
+      s.modified ? 'あり' : '', note];
   });
 }
 
@@ -351,7 +399,7 @@ function validateBackup(o) {
   if (!Array.isArray(o.log) || !Array.isArray(o.staff)) return 'データが足りません';
   for (const e of o.log) {
     if (!e || !['punch', 'correct', 'undo', 'pinreset'].includes(e.kind)) return '記録の形が正しくありません';
-    if (e.kind === 'punch' && (typeof e.ts !== 'number' || !e.id || !e.staffId || !['in', 'out'].includes(e.type))) return '打刻の形が正しくありません';
+    if (e.kind === 'punch' && (typeof e.ts !== 'number' || !e.id || !e.staffId || !['in', 'out', 'bin', 'bout'].includes(e.type))) return '打刻の形が正しくありません';
     if (e.kind === 'correct' && (typeof e.newTs !== 'number' || !e.targetId)) return '修正の形が正しくありません';
     if (e.kind === 'undo' && !e.targetId) return '取り消しの形が正しくありません';
   }
@@ -363,7 +411,7 @@ function daysSince(ts, now) { return ts ? Math.floor((now - ts) / 86400000) : nu
 const Core = { MAX_STAFF, UNDO_MS, PENDING_MS, STALE_OPEN_MS, CLOCK_AHEAD_MS, MAX_PENDINGS, DISCLAIMER,
   staleOpen, fmtElapsed, undoDeadline, clockWarning, sequenceProblems, prunePendings, addPending,
   maxStaff, makePending, pendingExpired, candidatesFor, fmtDate, fmtHMS, fmtTime, fmtDateTime, fmtHM, fmtDateJa, monthKey, toInputValue, parseLocalDateTime,
-  effectivePunches, pairShifts, shiftMinutes, staffStatus, validatePunch, validateStaffName, canActivateMore,
+  effectivePunches, pairShifts, shiftMinutes, shiftBreakMinutes, staffStatus, TYPE_JA, validatePunch, validateStaffName, canActivateMore,
   csvCell, toCSV, monthlySheetRows, rawRows, monthlyCSV, rawCSV, pinResetNotice, pinAfterRestore, hashPin, isPin, validateBackup, daysSince, SHEET_HEADER, RAW_HEADER };
 // ==CORE_END==
 </script>
@@ -512,7 +560,8 @@ function candButtons(cands, pd, stale) {
   const punches = getPunches();
   return h('div', { class: 'staff-grid' }, cands.map(s => {
     const st = C.staffStatus(punches, s.id);
-    return h('button', { type: 'button', class: 'staff', onclick: () => choose(s.id, pd, stale) }, h('div', { class: 'nm' }, s.name),
+    return h('button', { type: 'button', class: 'staff' + (st.onBreak ? ' onbreak' : ''), onclick: () => choose(s.id, pd, stale) }, h('div', { class: 'nm' }, s.name),
+      st.onBreak ? h('span', { class: 'brk-mark' }, '休憩中') : null,
       st.working ? h('div', { class: 'st' }, '出勤から' + C.fmtElapsed(Date.now() - st.since)) : null);
   }));
 }
@@ -531,7 +580,8 @@ function renderMain() {
   const bdays = C.daysSince(Store.meta.lastBackupAt, Date.now());
   if (Store.log.length && (bdays === null || bdays >= 30)) main.append(h('div', { class: 'banner' }, bdays === null ? 'まだバックアップを保存していません。管理画面から保存してください。' : 'バックアップから' + bdays + '日たっています。管理画面から保存してください。'));
   const working = active.filter(s => C.staffStatus(punches, s.id).working);
-  $('workingCount').textContent = active.length ? '出勤中 ' + working.length + '人 / ' + active.length + '人' : '';
+  const resting = working.filter(s => C.staffStatus(punches, s.id).onBreak).length;
+  $('workingCount').textContent = active.length ? '出勤中 ' + working.length + '人 / ' + active.length + '人' + (resting ? '(うち休憩中 ' + resting + '人)' : '') : '';
   if (!active.length) { main.append(h('p', { class: 'hint' }, 'スタッフがいません。「管理画面」から追加してください。')); return; }
 
   const act = S.repress ? null : S.pends[S.pends.length - 1];
@@ -541,13 +591,17 @@ function renderMain() {
     if (S.repress) main.append(h('p', { class: 'hint' }, '自分の分を押してください。前に押された分は、下に残っています。'));
     main.append(h('div', { class: 'actions' },
       h('button', { type: 'button', class: 'act in', onclick: () => press('in') }, '出勤'),
-      h('button', { type: 'button', class: 'act out', onclick: () => press('out') }, '退勤')));
+      h('button', { type: 'button', class: 'act out', onclick: () => press('out') }, '退勤'),
+      h('button', { type: 'button', class: 'act brk', onclick: () => press('bin') }, '休憩'),
+      h('button', { type: 'button', class: 'act bak', onclick: () => press('bout') }, '戻り')));
     if (S.repress) main.append(h('div', { class: 'row' }, h('button', { type: 'button', class: 'btn', onclick: () => { S.repress = false; renderMain(); } }, 'もどる')));
-    else main.append(h('p', { class: 'hint' }, '先に「出勤」か「退勤」を押してください。そのあと名前を選びます。(押した時刻が記録されます)'));
+    else main.append(h('p', { class: 'hint' }, '先に「出勤」「退勤」「休憩」「戻り」のどれかを押してください。そのあと名前を選びます。(押した時刻が記録されます)'));
     if (working.length) {
       main.append(h('h2', null, '出勤中'));
       main.append(h('div', { class: 'staff-grid' }, working.map(s => {
         const st = C.staffStatus(punches, s.id); const el = Date.now() - st.since; const stale = el >= C.STALE_OPEN_MS;
+        if (st.onBreak) return h('div', { class: 'staff working onbreak' }, h('div', { class: 'nm' }, s.name),
+          h('div', { class: 'st' }, '休憩中(' + C.fmtElapsed(Date.now() - st.breakSince) + ')' + (stale ? '(退勤の押し忘れ?)' : '')));
         return h('div', { class: 'staff working' }, h('div', { class: 'nm' }, s.name),
           h('div', { class: 'st' }, '出勤から' + C.fmtElapsed(el) + (stale ? '(退勤の押し忘れ?)' : '')));
       })));
@@ -560,7 +614,7 @@ function renderMain() {
     const cands = C.candidatesFor(punches, active, act.type);
     const stale = act.type === 'in' ? C.staleOpen(punches, active, act.ts) : [];
     main.append(h('h2', null, '誰ですか?'));
-    if (!cands.length && !stale.length) main.append(h('p', { class: 'hint' }, act.type === 'in' ? '出勤していない人がいません(全員出勤中です)。' : '出勤中の人がいません。'));
+    if (!cands.length && !stale.length) main.append(h('p', { class: 'hint' }, act.type === 'in' ? '出勤していない人がいません(全員出勤中です)。' : act.type === 'bout' ? '休憩中の人がいません。' : act.type === 'bin' ? '休憩に入れる人(出勤中で休憩中でない人)がいません。' : '出勤中の人がいません。'));
     if (cands.length) main.append(candButtons(cands, act, false));
     if (stale.length) {
       main.append(h('h2', { style: 'margin-top:14px' }, '前回の退勤が未入力の人'),
@@ -628,12 +682,13 @@ function choose(staffId, pd, stale) {
       if (cw.kind === 'back') opts.allowClockBack = true; else S.clockOkDay = C.fmtDate(pd.ts);
       if (C.pendingExpired(pd, Date.now())) { renderMain(); return; }
     }
-    const err = C.validatePunch(punches, staffId, pd.type, pd.ts, opts);
+    const type = pd.type;
+    const err = C.validatePunch(punches, staffId, type, pd.ts, opts);
     if (err) { flash(err, true); return; }
-    const entry = { kind: 'punch', id: uid('p'), staffId, type: pd.type, ts: pd.ts, at: Date.now() };
+    const entry = { kind: 'punch', id: uid('p'), staffId, type, ts: pd.ts, at: Date.now() };
     await Store.append(entry);
     S.pends = S.pends.filter(p => p !== pd); S.repress = false; S.msg = null;
-    showResult(staffName(staffId), pd.type, pd.ts, entry.id, staffId, entry.at);
+    showResult(staffName(staffId), type, pd.ts, entry.id, staffId, entry.at);
     renderMain();
   });
 }
@@ -828,7 +883,8 @@ function editForm(ed) {
         await Store.append(ent); S.editing = null; flash('修正しました(元の時刻は残っています)'); }) }, '修正する'), cancel));
   } else {
     const sel = h('select', { 'aria-label': 'スタッフ' }, staff.map(s => h('option', { value: s.id }, s.name + (s.active ? '' : '(休止)'))));
-    const ty = h('select', { 'aria-label': '種類' }, h('option', { value: 'in' }, '出勤'), h('option', { value: 'out' }, '退勤'));
+    const ty = h('select', { 'aria-label': '種類' }, h('option', { value: 'in' }, '出勤'), h('option', { value: 'out' }, '退勤'),
+      h('option', { value: 'bin' }, '休憩入り'), h('option', { value: 'bout' }, '休憩戻り'));
     const dt = h('input', { type: 'datetime-local', step: 1, value: C.toInputValue(Date.now()), 'aria-label': '日時' });
     box.append(h('p', null, '押し忘れた打刻を足します。「手入力」として記録に残ります。'), h('div', { class: 'row' }, sel, ty, dt, reason,
       h('button', { class: 'btn primary', type: 'button', onclick: () => guarded(async () => {
@@ -850,7 +906,7 @@ function tabCsv() {
   const wrap = h('div'); const punches = getPunches(); const staff = getStaff();
   wrap.append(h('div', { class: 'banner' }, C.DISCLAIMER));
   wrap.append(h('div', { class: 'row' }, '月: ', monthPicker(renderAdmin)));
-  wrap.append(h('p', { class: 'muted' }, 'UTF-8(BOM付き)です。Excelでそのまま開けます。退勤が無い日は退勤欄が空で、備考に「未退勤」と出ます。出勤日がこの月の勤務を載せます。'));
+  wrap.append(h('p', { class: 'muted' }, 'UTF-8(BOM付き)です。Excelでそのまま開けます。退勤が無い日は退勤欄が空で、備考に「未退勤」と出ます。出勤日がこの月の勤務を載せます。「休憩(分)」は休憩の合計、「実働」は勤務時間から休憩を引いた時間です。'));
   wrap.append(h('div', { class: 'row' },
     h('button', { class: 'btn primary', type: 'button', onclick: () => download('打刻_' + S.month + '.csv', '﻿' + C.monthlyCSV(punches, S.month, staff), 'text/csv;charset=utf-8') }, '月の勤務表をCSVで保存'),
     h('button', { class: 'btn', type: 'button', onclick: () => download('打刻_生記録_' + S.month + '.csv', '﻿' + C.rawCSV(punches, S.month, staff, Store.log), 'text/csv;charset=utf-8') }, '打刻の生記録をCSVで保存')));
@@ -909,7 +965,7 @@ function showDisclaimer() {
 }
 
 // ---------- 起動 ----------
-C.TYPE_JA_ = t => (t === 'in' ? '出勤' : '退勤');
+C.TYPE_JA_ = t => C.TYPE_JA[t] || t;
 (async function start() {
   await Store.init();
   await Store.runProbe();
