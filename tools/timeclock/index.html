@@ -468,6 +468,65 @@ function rawRows(punches, month, staffList) {
 }
 
 function monthlyCSV(punches, month, staffList) { return toCSV(SHEET_HEADER, monthlySheetRows(punches, month, staffList)); }
+
+// ---- 給料計算に便利な3種類(時間だけ。時給・金額・割増の計算はしない) ----
+// 合計の決まり: 実働=勤務−休憩。未退勤(退勤が無い行)は合計に入れず、未退勤の数で数える。分の合計から時:分を作る(四捨五入なし)。
+const SUMMARY_HEADER = ['スタッフ名', '出勤日数', '勤務時間合計(時:分)', '勤務時間合計(分)', '休憩合計(時:分)', '休憩合計(分)', '実働合計(時:分)', '実働合計(分)', '未退勤の数', '修正ありの数'];
+// 勤務表の行(monthlySheetRows)から人ごとに集計。列: 0日付 1名前 2出勤 5勤務分 8休憩分 10実働分 11修正 12備考
+function sumRows(rows) {
+  const days = new Set(); let min = 0, brk = 0, work = 0, open = 0, mod = 0;
+  for (const r of rows) {
+    if (r[2] !== '') days.add(r[0]);
+    if (r[11] === 'あり') mod++;
+    if (typeof r[5] === 'number') {                    // 退勤まで揃った行だけ合計に入れる
+      min += r[5]; brk += (typeof r[8] === 'number' ? r[8] : 0); work += (typeof r[10] === 'number' ? r[10] : 0);
+    } else if (String(r[12]).indexOf('未退勤') === 0) open++;
+  }
+  return { days: days.size, min, brk, work, open, mod };
+}
+// 人ごとにまとめる。スタッフ一覧の順→一覧に無い名前は最後。人の中は日付順(勤務表の順を保つ)
+function groupByStaff(rows, staffList) {
+  const order = new Map(); staffList.forEach((s, i) => order.set(s.name, i));
+  const by = new Map(); rows.forEach(r => { if (!by.has(r[1])) by.set(r[1], []); by.get(r[1]).push(r); });
+  return [...by.keys()].sort((a, b) => (order.has(a) ? order.get(a) : 9999) - (order.has(b) ? order.get(b) : 9999)).map(name => ({ name, rows: by.get(name) }));
+}
+function summaryRows(punches, month, staffList) {
+  return groupByStaff(monthlySheetRows(punches, month, staffList), staffList).map(g => {
+    const t = sumRows(g.rows);
+    return [g.name, t.days, fmtHM(t.min), t.min, fmtHM(t.brk), t.brk, fmtHM(t.work), t.work, t.open, t.mod];
+  });
+}
+function summaryCSV(punches, month, staffList) { return toCSV(SUMMARY_HEADER, summaryRows(punches, month, staffList)); }
+// 小計(合計)行。勤務表と同じ13列。日付欄にラベルを入れる
+function subtotalRow(label, name, rows) {
+  const t = sumRows(rows);
+  return [label, name, '', '', fmtHM(t.min), t.min, '', '', t.brk, fmtHM(t.work), t.work, '',
+    '出勤' + t.days + '日' + (t.open ? ' / 未退勤' + t.open + '件は合計に入れていません' : '')];
+}
+// 全員まとめ・人ごと: スタッフ→日付の順。各人の最後に小計、人と人の間は空行1つ
+function byPersonCSV(punches, month, staffList) {
+  const out = [];
+  groupByStaff(monthlySheetRows(punches, month, staffList), staffList).forEach((g, i) => {
+    if (i > 0) out.push([]);
+    g.rows.forEach(r => out.push(r)); out.push(subtotalRow('小計', g.name, g.rows));
+  });
+  return toCSV(SHEET_HEADER, out);
+}
+// 一人分(同じ列+最後に合計行)。その人が月に1行も無い時は null
+function personCSV(punches, month, staffList, name) {
+  const g = groupByStaff(monthlySheetRows(punches, month, staffList), staffList).find(x => x.name === name);
+  if (!g) return null;
+  return toCSV(SHEET_HEADER, g.rows.concat([subtotalRow('合計', g.name, g.rows)]));
+}
+// ファイル名に使えない文字は _ に。名前だけで空・ドットだけになる場合も _ にする
+function safeFileName(name) {
+  let s = String(name).replace(/[\\\/:*?"<>|\u0000-\u001f\u007f]/g, '_').trim();
+  if (!s || /^\.+$/.test(s)) s = '_';
+  return s;
+}
+function personFileName(month, name) { return '打刻_' + month + '_' + safeFileName(name) + '.csv'; }
+// 月に勤務のある人の名前(一覧の順)
+function personNames(punches, month, staffList) { return groupByStaff(monthlySheetRows(punches, month, staffList), staffList).map(g => g.name); }
 // 暗証番号の作り直しも生記録に1行出す(log を渡した時だけ)
 function rawCSV(punches, month, staffList, log) {
   const rows = rawRows(punches, month, staffList);
@@ -562,7 +621,7 @@ const Core = { MAX_STAFF, UNDO_MS, PENDING_MS, STALE_OPEN_MS, CLOCK_AHEAD_MS, MA
   setPendingMs, pendingMs, DEMO_PIN, makeDemoData, practiceSwap, practiceRestore, demoFileName,
   maxStaff, makePending, pendingExpired, candidatesFor, fmtDate, fmtHMS, fmtTime, fmtDateTime, fmtHM, fmtDateJa, monthKey, toInputValue, parseLocalDateTime,
   effectivePunches, pairShifts, shiftMinutes, shiftBreakMinutes, staffStatus, TYPE_JA, validatePunch, validateStaffName, canActivateMore,
-  csvCell, toCSV, monthlySheetRows, rawRows, monthlyCSV, rawCSV, pinResetNotice, pinAfterRestore, hashPin, isPin, validateBackup, daysSince, SHEET_HEADER, RAW_HEADER };
+  csvCell, toCSV, monthlySheetRows, rawRows, monthlyCSV, rawCSV, SUMMARY_HEADER, summaryRows, summaryCSV, byPersonCSV, personCSV, personFileName, safeFileName, personNames, pinResetNotice, pinAfterRestore, hashPin, isPin, validateBackup, daysSince, SHEET_HEADER, RAW_HEADER };
 // ==CORE_END==
 </script>
 
@@ -1054,16 +1113,48 @@ function download(name, text, type) {
 }
 function tabCsv() {
   const wrap = h('div'); const punches = getPunches(); const staff = getStaff();
+  const BOM = '\uFEFF', CT = 'text/csv;charset=utf-8';
+  const tbl = (head, rows, attrs) => h('div', attrs, h('table', null, h('thead', null, h('tr', null, head.map(t => h('th', null, t)))),
+    h('tbody', null, rows.slice(0, 10).map(r => h('tr', null, r.map(c => h('td', null, c === null ? '' : String(c))))))));
   wrap.append(h('div', { class: 'banner' }, C.DISCLAIMER));
   wrap.append(h('div', { class: 'row' }, '月: ', monthPicker(renderAdmin)));
-  wrap.append(h('p', { class: 'muted' }, 'UTF-8(BOM付き)です。Excelでそのまま開けます。退勤が無い日は退勤欄が空で、備考に「未退勤」と出ます。出勤日がこの月の勤務を載せます。「休憩(分)」は休憩の合計、「実働」は勤務時間から休憩を引いた時間です。'));
+  wrap.append(h('p', { class: 'muted' }, 'UTF-8(BOM付き)です。Excelでそのまま開けます。出勤日がこの月の勤務を数えます。合計は「実働=勤務時間−休憩」で、退勤が無い勤務は合計に入れず「未退勤の数」で知らせます。時間だけを出します(時給や金額の計算はしません)。'));
+  const names = C.personNames(punches, S.month, staff);
+  // 1. 月の集計
+  const sum = C.summaryRows(punches, S.month, staff);
+  wrap.append(h('h3', null, '① 月の集計(1人1行)'));
+  wrap.append(h('p', { class: 'muted' }, '給料計算に貼るのは、これです。スタッフ1人につき1行(出勤日数・勤務・休憩・実働の合計)。'));
+  wrap.append(h('div', { class: 'row' }, h('button', { class: 'btn primary', type: 'button', 'data-tt': 'csv-summary',
+    onclick: () => download('打刻_集計_' + S.month + '.csv', BOM + C.summaryCSV(punches, S.month, staff), CT) }, '月の集計をCSVで保存')));
+  if (sum.length) wrap.append(tbl(C.SUMMARY_HEADER, sum, { class: 'tablewrap', 'data-tt': 'csv-summary-preview' }));
+  // 2. 全員まとめ・人ごと
+  wrap.append(h('h3', null, '② 全員まとめ・人ごと(小計つき)'));
+  wrap.append(h('p', { class: 'muted' }, '勤務表と同じ列を、スタッフ→日付の順に並べ、人ごとの最後に「小計」行が付きます。'));
+  wrap.append(h('div', { class: 'row' }, h('button', { class: 'btn', type: 'button', 'data-tt': 'csv-byperson',
+    onclick: () => download('打刻_人ごと_' + S.month + '.csv', BOM + C.byPersonCSV(punches, S.month, staff), CT) }, '全員まとめ・人ごとをCSVで保存')));
+  // 3. 一人ずつ
+  wrap.append(h('h3', null, '③ 一人ずつ'));
+  if (!names.length) wrap.append(h('p', { class: 'muted' }, 'この月は勤務の記録がありません。'));
+  else {
+    if (!names.includes(S.csvStaff)) S.csvStaff = names[0];
+    const sel = h('select', { 'aria-label': 'スタッフ', 'data-tt': 'csv-person-select', onchange: () => { S.csvStaff = sel.value; } },
+      names.map(n => h('option', { value: n, selected: n === S.csvStaff }, n)));
+    const one = (n) => download(C.personFileName(S.month, n), BOM + C.personCSV(punches, S.month, staff, n), CT);
+    wrap.append(h('div', { class: 'row' }, sel,
+      h('button', { class: 'btn', type: 'button', 'data-tt': 'csv-person', onclick: () => one(sel.value) }, 'この人をCSVで保存'),
+      h('button', { class: 'btn', type: 'button', 'data-tt': 'csv-person-all', onclick: () => {
+        names.forEach((n, i) => setTimeout(() => one(n), i * 600));
+        flash(names.length + '人分を1人ずつ保存しています。途中で止まったら、ブラウザの「複数のファイルのダウンロード」を許可するか、上の「この人をCSVで保存」で1人ずつ保存してください');
+      } }, '全員分を1人ずつ保存')));
+  }
+  // 4. 日付順の勤務表・生記録
+  wrap.append(h('h3', null, '日付順の勤務表・生記録'));
   wrap.append(h('div', { class: 'row' },
-    h('button', { class: 'btn primary', type: 'button', 'data-tt': 'csv-month', onclick: () => download('打刻_' + S.month + '.csv', '﻿' + C.monthlyCSV(punches, S.month, staff), 'text/csv;charset=utf-8') }, '月の勤務表をCSVで保存'),
-    h('button', { class: 'btn', type: 'button', 'data-tt': 'csv-raw', onclick: () => download('打刻_生記録_' + S.month + '.csv', '﻿' + C.rawCSV(punches, S.month, staff, Store.log), 'text/csv;charset=utf-8') }, '打刻の生記録をCSVで保存')));
+    h('button', { class: 'btn', type: 'button', 'data-tt': 'csv-month', onclick: () => download('打刻_' + S.month + '.csv', BOM + C.monthlyCSV(punches, S.month, staff), CT) }, '月の勤務表(日付順)をCSVで保存'),
+    h('button', { class: 'btn', type: 'button', 'data-tt': 'csv-raw', onclick: () => download('打刻_生記録_' + S.month + '.csv', BOM + C.rawCSV(punches, S.month, staff, Store.log), CT) }, '打刻の生記録をCSVで保存')));
   const rows = C.monthlySheetRows(punches, S.month, staff);
-  wrap.append(h('p', { class: 'muted' }, 'この月の勤務: ' + rows.length + '行(下は先頭10行のプレビュー)'));
-  if (rows.length) wrap.append(h('div', { class: 'tablewrap', 'data-tt': 'csv-preview' }, h('table', null, h('thead', null, h('tr', null, C.SHEET_HEADER.map(t => h('th', null, t)))),
-    h('tbody', null, rows.slice(0, 10).map(r => h('tr', null, r.map(c => h('td', null, c === null ? '' : String(c)))))))));
+  wrap.append(h('p', { class: 'muted' }, 'この月の勤務: ' + rows.length + '行(下は日付順の勤務表の先頭10行のプレビュー。退勤が無い日は退勤欄が空で、備考に「未退勤」と出ます)'));
+  if (rows.length) wrap.append(tbl(C.SHEET_HEADER, rows, { class: 'tablewrap', 'data-tt': 'csv-preview' }));
   return wrap;
 }
 
@@ -1251,14 +1342,17 @@ const LESSONS = [
       until: () => countKind('punch', e => e.manual) > T.n },
     infoStep('直した所・足した所は、CSVの「修正あり」の列に出ます。元の時刻は記録に残っています', null, () => ensureAdmin('fix')),
   ] },
-  { id: 'csv', title: '④ CSVをデモの数字でダウンロード', sub: '月の勤務表を保存してみる(ファイル名は demo_ から)', demo: 'full', steps: () => [
+  { id: 'csv', title: '④ CSVをデモの数字でダウンロード', sub: '集計→人ごと→一人ずつ、の順に保存してみる(ファイル名は demo_ から)', demo: 'full', steps: () => [
     adminTap('「管理画面」をタップ'),
     unlockStep(false),
     tabTap('csv', '次はここをタップ:「CSV」'),
-    { sel: '[data-tt=csv-month]', type: 'tap', text: '「月の勤務表をCSVで保存」をタップ。練習用の数字のファイル(demo_ から始まる名前)が保存されます', ensure() { ensureAdmin('csv'); } },
+    infoStep('給料計算に使うなら、いちばん上の「月の集計」が便利です。1人1行で、出勤日数と勤務・休憩・実働の合計が出ます(時給や金額の計算はしません)', '[data-tt=csv-summary-preview]', () => ensureAdmin('csv')),
+    { sel: '[data-tt=csv-summary]', type: 'tap', text: '「月の集計をCSVで保存」をタップ。練習用の数字のファイル(demo_ から始まる名前)が保存されます', ensure() { ensureAdmin('csv'); } },
     infoStep('保存したファイルは、端末の「ダウンロード」(iPhone・iPadは「ファイル」アプリ)に入ります。Excelなどでそのまま開けます', null, () => ensureAdmin('csv')),
-    { sel: '[data-tt=csv-raw]', type: 'tap', text: '「打刻の生記録をCSVで保存」もタップ。修正や取り消しも全部入った記録です', ensure() { ensureAdmin('csv'); } },
-    infoStep('ここは勤務表の先頭10行のプレビューです。休憩と実働(勤務から休憩を引いた時間)も出ます', '[data-tt=csv-preview]', () => ensureAdmin('csv')),
+    { sel: '[data-tt=csv-byperson]', type: 'tap', text: '次は「全員まとめ・人ごと」をタップ。さくらさん・たろうさんの勤務が人ごとに並び、最後に小計が付きます', ensure() { ensureAdmin('csv'); } },
+    { sel: '[data-tt=csv-person]', type: 'tap', text: '最後に「一人ずつ」。スタッフを選んで「この人をCSVで保存」をタップ。1人分のファイルになります(「全員分を1人ずつ保存」で全員ぶんもできます)', ensure() { ensureAdmin('csv'); } },
+    { sel: '[data-tt=csv-raw]', type: 'tap', text: '下の「打刻の生記録をCSVで保存」もタップ。修正や取り消しも全部入った記録です', ensure() { ensureAdmin('csv'); } },
+    infoStep('ここは日付順の勤務表の先頭10行のプレビューです。休憩と実働(勤務から休憩を引いた時間)も出ます', '[data-tt=csv-preview]', () => ensureAdmin('csv')),
   ] },
   { id: 'backup', title: '⑤ バックアップの取り方と戻し方', sub: '練習用のデータで「保存→戻す」を体験', demo: 'full', steps: () => [
     adminTap('「管理画面」をタップ'),
