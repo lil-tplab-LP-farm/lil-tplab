@@ -98,6 +98,8 @@
   .tut-menu-item .done { float:right; color:var(--brk); font-weight:700; }
   #tutLayer { position:fixed; inset:0; z-index:200; pointer-events:none; }
   #tutLayer .tb { position:fixed; pointer-events:auto; background:transparent; }
+  html:has(#tutLayer), html:has(#tutLayer) body { overflow:hidden; overscroll-behavior:none; }   /* チュートリアル中は後ろの画面をスクロールさせない(光る枠とずれないように) */
+  #tutLayer .tb, #tutLayer .tdim { touch-action:none; }
   #tutLayer .tdim { position:fixed; inset:0; background:rgba(0,0,0,.62); pointer-events:auto; }
   #tutLayer .tring { position:fixed; border-radius:12px; box-shadow:0 0 0 200vmax rgba(0,0,0,.62); pointer-events:none; }
   #tutLayer .tring::before { content:''; position:absolute; inset:-3px; border:3px solid #ffca28; border-radius:14px; }
@@ -1516,6 +1518,10 @@ document.addEventListener('click', ev => {                       // 押してほ
   const el = qs(st.sel); if (el && el.contains(ev.target)) tutAdvance();
 }, true);
 window.addEventListener('resize', tutUpdate);
+let tutScrollRaf = 0;                                            // 画面の中(管理画面など)が動いた時も、光る枠・指・吹き出しを追従させる
+document.addEventListener('scroll', () => { if (!T.layer || tutScrollRaf) return; tutScrollRaf = requestAnimationFrame(() => { tutScrollRaf = 0; tutUpdate(); }); }, true);
+document.addEventListener('wheel', ev => { if (T.layer && ev.target.closest && ev.target.closest('#tutLayer .tdim, #tutLayer .tb')) ev.preventDefault(); }, { passive: false });
+document.addEventListener('touchmove', ev => { if (T.layer && ev.target.closest && ev.target.closest('#tutLayer .tdim, #tutLayer .tb')) ev.preventDefault(); }, { passive: false });
 window.addEventListener('orientationchange', () => setTimeout(tutUpdate, 200));
 
 // ---------- 起動 ----------
