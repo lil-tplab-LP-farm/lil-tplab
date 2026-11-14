@@ -1212,8 +1212,6 @@ const LESSONS = [
     unlockStep(true),
     { sel: '[data-tt=staffadd]', type: 'until', text: 'スタッフの名前を入れて「追加」をタップ(例: さくら)',
       ensure() { ensureAdmin('staff'); }, until: () => getStaff().length >= 1 },
-    { sel: '[data-tt=staffadd]', type: 'until', text: 'もう1人、名前を入れて「追加」をタップ(例: たろう)',
-      ensure() { ensureAdmin('staff'); }, until: () => getStaff().length >= 2 },
     infoStep('追加した人はここに並びます。名前の直し・休止・並び替えもここです(⑦で練習できます)', '#adminBox .tablewrap', () => ensureAdmin('staff')),
     closeTap('staff'),
     infoStep('スマホ・タブレットは「ホーム画面に追加」しておくと、アイコンからすぐ開けます', null, () => idleMain(), picAddHome),
