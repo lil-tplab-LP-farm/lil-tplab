@@ -5,12 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
 <title>出退勤の打刻</title>
-<link rel="canonical" href="https://lil-tplab.tech/tools/timeclock/">
-<meta property="og:type" content="website">
-<meta property="og:title" content="出退勤の打刻">
-<meta property="og:url" content="https://lil-tplab.tech/tools/timeclock/">
-<meta property="og:image" content="https://lil-tplab.tech/tools/timeclock/icon-512.png">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "出退勤の打刻", "description": "出退勤の打刻", "url": "https://lil-tplab.tech/tools/timeclock/", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any", "inLanguage": "ja", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "JPY"}}</script>
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="manifest" href="manifest.json">
@@ -90,6 +84,99 @@
   .muted { color:var(--mute); font-size:.85rem; }
   .hidden { display:none !important; }
   @media (max-width:420px) { .actions { gap:8px; } .act { min-height:104px; } }
+  /* ---- チュートリアル(練習モード) ---- */
+  body { padding-bottom:calc(52px + env(safe-area-inset-bottom)); }
+  .tut-btn { position:fixed; right:10px; bottom:calc(10px + env(safe-area-inset-bottom)); z-index:48; min-height:40px; padding:0 12px; border-radius:20px;
+    border:1px solid #9aa4af; background:#fff; color:var(--mute); font-size:.82rem; box-shadow:0 2px 8px rgba(0,0,0,.15); }
+  .tut-invite b { color:var(--in); }
+  #practiceBand { position:fixed; left:0; right:0; top:0; z-index:150; height:30px; line-height:30px; text-align:center; background:#ef6c00; color:#fff; font-weight:700; font-size:.85rem; }
+  body.practice { padding-top:30px; }
+  body.practice .overlay-result { top:42px; }
+  body.practice .modal { padding-top:40px; }
+  .tut-menu-item { display:block; width:100%; text-align:left; min-height:56px; padding:8px 12px; margin:8px 0; border:1px solid #9aa4af; border-radius:12px; background:#fff; color:var(--ink); }
+  .tut-menu-item .sub { display:block; font-size:.8rem; color:var(--mute); margin-top:2px; }
+  .tut-menu-item .done { float:right; color:var(--brk); font-weight:700; }
+  #tutLayer { position:fixed; inset:0; z-index:200; pointer-events:none; }
+  #tutLayer .tb { position:fixed; pointer-events:auto; background:transparent; }
+  #tutLayer .tdim { position:fixed; inset:0; background:rgba(0,0,0,.62); pointer-events:auto; }
+  #tutLayer .tring { position:fixed; border-radius:12px; box-shadow:0 0 0 200vmax rgba(0,0,0,.62); pointer-events:none; }
+  #tutLayer .tring::before { content:''; position:absolute; inset:-3px; border:3px solid #ffca28; border-radius:14px; }
+  #tutLayer .tring::after { content:''; position:absolute; inset:-3px; border:3px solid #ffca28; border-radius:14px; animation:tutRipple 1.4s ease-out infinite; }
+  #tutLayer .tfinger { position:fixed; font-size:30px; line-height:1; pointer-events:none; animation:tutBob 1s ease-in-out infinite; filter:drop-shadow(0 2px 3px rgba(0,0,0,.5)); }
+  #tutLayer .tfinger.up { transform-origin:center; }
+  #tutLayer .tbubble { position:fixed; background:#fff; color:var(--ink); border-radius:14px; padding:12px 14px; box-shadow:0 8px 30px rgba(0,0,0,.45); pointer-events:auto; max-height:70vh; overflow:auto; }
+  .thead { font-size:.75rem; color:var(--mute); margin-bottom:4px; }
+  .ttext { font-size:1.05rem; font-weight:700; line-height:1.5; }
+  .tbtns { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  .tbtn { min-height:44px; padding:0 16px; border:1px solid #9aa4af; border-radius:10px; background:#fff; }
+  .tbtn.tprimary { background:var(--in); color:#fff; border-color:var(--in); font-weight:700; }
+  .tbtn:disabled { opacity:.4; }
+  .tskip { display:block; margin-top:6px; background:none; border:none; color:var(--mute); text-decoration:underline; font-size:.78rem; min-height:36px; padding:0; }
+  .tutPic { margin-top:8px; font-size:.82rem; font-weight:400; }
+  .pcTitle { font-weight:700; margin:8px 0 4px; }
+  .pcRow { display:flex; align-items:stretch; gap:4px; }
+  .pc { flex:1; border:1px solid var(--line); border-radius:10px; padding:6px 4px; text-align:center; background:#f4f6f8; }
+  .pci { font-size:1.5rem; line-height:1.3; }
+  .pca { align-self:center; color:var(--mute); }
+  .tdone { text-align:center; }
+  .tdone .big { font-size:2.2rem; font-weight:700; animation:tutPop .6s ease-out; }
+  .tconf { position:fixed; top:-30px; font-size:26px; pointer-events:none; animation:tutFall 2.2s ease-in forwards; }
+  @keyframes tutRipple { 0% { transform:scale(1); opacity:.9; } 100% { transform:scale(1.1,1.35); opacity:0; } }
+  @keyframes tutBob { 0%,100% { margin-top:0; } 50% { margin-top:-10px; } }
+  @keyframes tutPop { 0% { transform:scale(.4); opacity:0; } 70% { transform:scale(1.15); } 100% { transform:scale(1); opacity:1; } }
+  @keyframes tutFall { 0% { transform:translateY(0) rotate(0); opacity:1; } 100% { transform:translateY(105vh) rotate(360deg); opacity:.8; } }
+  /* ---- ダコちゃん(案内キャラ。ショッキングピンクのタコ) ---- */
+  #tutLayer .tring::before, #tutLayer .tring::after { border-color:#ff4db2; }
+  #tutLayer .tbubble { border:3px solid #FF1493; }
+  .ttext { font-size:1.15rem; }
+  .dk { display:inline-block; position:relative; line-height:0; cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; user-select:none; -webkit-user-select:none; }
+  .dk svg { width:100%; height:100%; display:block; overflow:visible; transform:scaleX(var(--fx,1)); }
+  .dk .fe-n, .dk .fe-p, .dk .fe-j { display:none; }
+  .dk[data-ex=n] .fe-n, .dk[data-ex=p] .fe-p, .dk[data-ex=j] .fe-j { display:inline; }
+  .dk .dk-body { transition:fill .25s; } .dk .dk-leg { transition:stroke .25s; }
+  .dk .pl { transform:rotate(60deg); transition:transform .25s; }
+  .dk[data-ex=p] .pl { transform:rotate(var(--pt,-35deg)); }
+  .dk.dk-t { position:fixed; width:64px; height:64px; z-index:2; pointer-events:auto; }
+  .dk.dk-mini { width:30px; height:28px; margin:-2px 6px -2px 0; vertical-align:middle; }
+  .dk.dk-mini .lgs { display:none; }
+  .dk.gone { visibility:hidden; pointer-events:none; }
+  .dk.pop { animation:dkPop .45s cubic-bezier(.3,1.6,.5,1); }
+  .dk.back { animation:dkBack .8s ease-out; }
+  .dk.a1 { animation:dkJump .6s ease-out; }
+  .dk.a2 { animation:dkSpin .7s ease-in-out; }
+  .dk.a3 { animation:dkShake .9s ease-in-out; }
+  .dk.a3 .lg { animation:dkLeg .15s ease-in-out 6 alternate; animation-delay:var(--d,0s); }
+  .dk.a4 { animation:dkShy 1s ease-in-out; }
+  .dk.a4 .dk-body { animation:dkRedF 1s ease-in-out; }
+  .dk.a4 .dk-leg { animation:dkRedS 1s ease-in-out; }
+  .dk.a4 .blush { animation:dkBl 1s ease-in-out; }
+  .dk.a5 { animation:dkVanish .9s ease-in forwards; }
+  .dkink { position:fixed; z-index:300; width:0; height:0; pointer-events:none; }
+  .dkink i { position:absolute; left:-28px; top:-28px; width:56px; height:56px; border-radius:50%; pointer-events:none;
+    background:radial-gradient(circle at 40% 38%, #3a3a4c, #07070c 70%); opacity:0; animation:dkInk 1.1s ease-out forwards; animation-delay:var(--dl,0s); }
+  @keyframes dkPop { 0% { transform:translateY(22px) scale(.2); opacity:0; } 100% { transform:none; opacity:1; } }
+  @keyframes dkBack { 0% { transform:translateX(var(--bx,140px)); opacity:0; } 100% { transform:none; opacity:1; } }
+  @keyframes dkJump { 0% { transform:none; } 18% { transform:scale(1.1,.86); } 50% { transform:translateY(-22px) scale(.95,1.08); } 80% { transform:scale(1.08,.9); } 100% { transform:none; } }
+  @keyframes dkSpin { 0% { transform:rotate(0); } 100% { transform:rotate(360deg); } }
+  @keyframes dkShake { 0%,100% { transform:none; } 25% { transform:translateY(-3px) rotate(-3deg); } 75% { transform:translateY(-3px) rotate(3deg); } }
+  @keyframes dkLeg { 0% { transform:rotate(calc(var(--s,1) * -17deg)); } 100% { transform:rotate(calc(var(--s,1) * 17deg)); } }
+  @keyframes dkShy { 0%,100% { transform:none; } 35%,65% { transform:scale(.92) rotate(-4deg); } }
+  @keyframes dkRedF { 0%,100% { fill:#FF1493; } 35%,65% { fill:#C4004A; } }
+  @keyframes dkRedS { 0%,100% { stroke:#FF1493; } 35%,65% { stroke:#C4004A; } }
+  @keyframes dkBl { 0%,100% { opacity:.5; } 35%,65% { opacity:1; fill:#ffc2de; } }
+  @keyframes dkVanish { 0% { transform:none; opacity:1; } 45% { transform:scale(1.12); opacity:1; } 100% { transform:scale(.55); opacity:0; } }
+  @keyframes dkInk { 0% { transform:translate(0,0) scale(.2); opacity:.95; } 55% { opacity:.85; } 100% { transform:translate(var(--x,0),var(--y,0)) scale(var(--k,1.8)); opacity:0; } }
+  @keyframes dkSoft { 0% { opacity:.55; } 100% { opacity:1; } }
+  @keyframes dkFade { 0% { opacity:1; } 100% { opacity:0; } }
+  @media (prefers-reduced-motion: reduce) {
+    #tutLayer .tring::after, #tutLayer .tfinger, .tdone .big, .tconf { animation:none !important; }
+    .tconf { display:none; }
+    .dk.pop, .dk.back, .dk.a1, .dk.a2, .dk.a3 { animation:dkSoft .35s !important; }
+    .dk.a3 .lg, .dk.a4 { animation:none !important; }
+    .dk.a5 { animation:dkFade .6s forwards !important; }
+    .dkink { display:none; }
+    .dk .pl { transition:none; }
+  }
 </style>
 </head>
 <body>
@@ -102,12 +189,15 @@
 <footer>
   <button class="admin-link" id="adminBtn" type="button">管理画面</button>
   <a class="guide-link" href="guide.html">使い方</a>
-  <a class="guide-link" href="../privacy.html">プライバシー</a>
 </footer>
 <div id="resultBox"></div>
 <div id="undoBox"></div>
 <div id="adminBox"></div>
 <div id="noticeBox"></div>
+<div id="tutMenuBox"></div>
+<div id="practiceBand" class="hidden">練習モード — 本番の記録・暗証番号・設定には触れません</div>
+<!--DAKO_TPL--><template id="dakoTpl"><svg class="dkv" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><g class="lgs"><g class="lg" style="transform-origin:30px 58px;--s:1;--d:0s"><path class="dk-leg" d="M30 58 Q17 66 19 80" fill="none" stroke="#FF1493" stroke-width="9" stroke-linecap="round"/><g transform="rotate(-8 17 88)"><rect x="7" y="76" width="19" height="23" rx="2.5" fill="#fff" stroke="#1565c0" stroke-width="1.6"/><rect x="7" y="76" width="19" height="6" rx="2.5" fill="#1565c0"/><circle cx="16.5" cy="90" r="5" fill="none" stroke="#1565c0" stroke-width="1.5"/><path d="M16.5 87 V90 H19" fill="none" stroke="#1565c0" stroke-width="1.4" stroke-linecap="round"/></g></g><g class="lg" style="transform-origin:38px 58px;--s:1;--d:0.04s"><path class="dk-leg" d="M38 58 Q32 76 36 93" fill="none" stroke="#FF1493" stroke-width="9" stroke-linecap="round"/></g><g class="lg" style="transform-origin:44px 58px;--s:-1;--d:0.08s"><path class="dk-leg" d="M44 58 Q41 76 39 93" fill="none" stroke="#FF1493" stroke-width="9" stroke-linecap="round"/></g><g class="lg" style="transform-origin:50px 58px;--s:1;--d:0.12s"><path class="dk-leg" d="M50 58 Q52 76 54 93" fill="none" stroke="#FF1493" stroke-width="9" stroke-linecap="round"/></g><g class="lg" style="transform-origin:56px 58px;--s:-1;--d:0.16s"><path class="dk-leg" d="M56 58 Q60 76 64 93" fill="none" stroke="#FF1493" stroke-width="9" stroke-linecap="round"/></g><g class="lg" style="transform-origin:62px 58px;--s:1;--d:0.20s"><path class="dk-leg" d="M62 58 Q68 76 65 93" fill="none" stroke="#FF1493" stroke-width="9" stroke-linecap="round"/></g><g class="lg" style="transform-origin:68px 58px;--s:-1;--d:0.24s"><path class="dk-leg" d="M68 58 Q76 76 78 93" fill="none" stroke="#FF1493" stroke-width="9" stroke-linecap="round"/></g><g class="lg" style="transform-origin:74px 58px;--s:-1;--d:.32s"><g class="pl" style="transform-origin:74px 58px"><path class="dk-leg" d="M74 58 Q92 54 98 66" fill="none" stroke="#FF1493" stroke-width="9" stroke-linecap="round"/></g></g></g><ellipse class="dk-body" cx="50" cy="40" rx="31" ry="29" fill="#FF1493"/><ellipse cx="37" cy="23.5" rx="9" ry="4.6" fill="#fff" opacity=".34" transform="rotate(-24 37 23.5)"/><ellipse class="blush" cx="31" cy="48" rx="5.2" ry="3.1" fill="#ff9ec9" opacity=".5"/><ellipse class="blush" cx="69" cy="48" rx="5.2" ry="3.1" fill="#ff9ec9" opacity=".5"/><g class="fe-n"><circle cx="40" cy="38" r="5.4" fill="#fff"/><circle cx="40" cy="39" r="2.9" fill="#2a2f36"/><circle cx="41" cy="37.8" r="0.9" fill="#fff"/><circle cx="60" cy="38" r="5.4" fill="#fff"/><circle cx="60" cy="39" r="2.9" fill="#2a2f36"/><circle cx="61" cy="37.8" r="0.9" fill="#fff"/><path d="M44 49 Q50 54 56 49" fill="none" stroke="#2a2f36" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></g><g class="fe-p"><circle cx="40" cy="38" r="5.4" fill="#fff"/><circle cx="41.8" cy="39" r="2.9" fill="#2a2f36"/><circle cx="42.8" cy="37.8" r="0.9" fill="#fff"/><circle cx="60" cy="38" r="5.4" fill="#fff"/><circle cx="61.8" cy="39" r="2.9" fill="#2a2f36"/><circle cx="62.8" cy="37.8" r="0.9" fill="#fff"/><path d="M44 48 Q50 56 56 48" fill="none" stroke="#2a2f36" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></g><g class="fe-j"><path d="M34.5 39 Q40 31.5 45.5 39" fill="none" stroke="#2a2f36" stroke-width="2.6" stroke-linecap="round"/><path d="M54.5 39 Q60 31.5 65.5 39" fill="none" stroke="#2a2f36" stroke-width="2.6" stroke-linecap="round"/><path d="M43 46.5 Q50 60 57 46.5 Z" fill="#8a0040" stroke="#2a2f36" stroke-width="2" stroke-linejoin="round"/><path d="M46.5 53 Q50 50.5 53.5 53 Q50 57 46.5 53Z" fill="#ff7ab8"/></g></svg></template><!--/DAKO_TPL-->
+<button class="tut-btn" id="tutBtn" type="button">？チュートリアル</button>
 
 <!-- ============ 計算の部分(画面と切り離す。test/ から node で試す) ============ -->
 <script id="core">
@@ -282,7 +372,11 @@ function sequenceProblems(punches, staffId) {
 // 押した瞬間の打刻(保留)を作る。ts はここで確定する。
 function makePending(type, ts) { return { type, ts }; }
 // 保留が古すぎるか(押してから PENDING_MS を超えたら捨てる)
-function pendingExpired(pending, now) { return !pending || (now - pending.ts) >= PENDING_MS; }
+// 練習モード中だけ長くする(読んでいる間に捨てられないように)。本番は常に PENDING_MS
+let pendingLimit = PENDING_MS;
+function setPendingMs(ms) { pendingLimit = ms; }
+function pendingMs() { return pendingLimit; }
+function pendingExpired(pending, now) { return !pending || (now - pending.ts) >= pendingLimit; }
 // 保留は最大 MAX_PENDINGS 件。期限切れは除き、新しいものを足す(あふれたら古いものから落とす)
 function prunePendings(list, now) { return list.filter(p => !pendingExpired(p, now)); }
 function addPending(list, p, now) { const l = prunePendings(list, now).concat([p]); return l.slice(Math.max(0, l.length - MAX_PENDINGS)); }
@@ -417,8 +511,53 @@ function validateBackup(o) {
 }
 function daysSince(ts, now) { return ts ? Math.floor((now - ts) / 86400000) : null; }
 
+// ---- 練習モード(チュートリアル)。本番の保存先・記録・暗証番号には一切触れない ----
+// 保存先(Store)を「メモリだけ」の練習用データに差し替え、終わったら元の入れ物をそのまま戻す。
+// 練習中の Store.mode は 'memory' なので、書き込み(append/setMeta/replaceAll)は練習用の配列にしか行かない(IndexedDB・localStorage に触れない)。
+const DEMO_PIN = '1234';
+const DEMO_NAMES = ['さくら', 'たろう', 'はなこ', 'けんた', 'みお', 'そうた', 'りん', 'あおい', 'だいち', 'ことは'];
+// kind: 'empty'(スタッフも暗証番号も無い・はじめの設定用) / 'staff'(2人・打刻なし) / 'full'(2人・先月1か月分の打刻) / 'ten'(10人)
+function makeDemoData(kind, now) {
+  const salt = 'demo';
+  const pin = { salt, hash: hashPin(DEMO_PIN, salt) };
+  const pm = new Date(new Date(now).getFullYear(), new Date(now).getMonth() - 1, 1);
+  const y = pm.getFullYear(), mo = pm.getMonth(), last = new Date(y, mo + 1, 0).getDate();
+  const out = { kind, staff: [], log: [], meta: {}, month: fmtDate(pm.getTime()).slice(0, 7), addTs: new Date(y, mo, last, 23, 0, 0, 0).getTime() };
+  if (kind === 'empty') return out;
+  out.staff = DEMO_NAMES.slice(0, kind === 'ten' ? 10 : 2).map((name, i) => ({ id: 'demo_st' + (i + 1), name, active: true }));
+  out.meta = { staff: out.staff.map(s => Object.assign({}, s)), pin, disclaimerAckAt: now };
+  if (kind !== 'full') return out;
+  let n = 0;
+  const push = (s, type, ts) => out.log.push({ kind: 'punch', id: 'dp_' + (++n), staffId: s.id, type, ts, at: ts });
+  for (let day = 1; day <= last; day++) {
+    out.staff.forEach((s, i) => {
+      if (new Date(y, mo, day).getDay() === 0 || (day + i) % 4 === 0) return;      // 日曜と、人ごとの休み
+      const t = (hh, mm) => new Date(y, mo, day, hh, mm, 0, 0).getTime();
+      push(s, 'in', t(9 + i, (day * 7 + i * 11) % 30));
+      push(s, 'bin', t(12 + i, 0)); push(s, 'bout', t(12 + i, 45));
+      push(s, 'out', t(18 + i, (day * 5) % 40));
+    });
+  }
+  const first = out.log[0];
+  if (first) out.log.push({ kind: 'correct', targetId: first.id, newTs: first.ts + 5 * 60000, reason: '練習用の修正', at: first.ts + 6 * 60000 });
+  return out;
+}
+// 本番の保存先の状態を控えて、練習用に差し替える。戻す時は practiceRestore に控えを渡す
+function practiceSwap(store, demo) {
+  const snap = { mode: store.mode, db: store.db, log: store.log, meta: store.meta, seq: store.seq, probe: store.probe };
+  store.mode = 'memory'; store.db = null;
+  store.log = demo.log.map((e, i) => Object.assign({}, e, { seq: i + 1 }));
+  store.meta = JSON.parse(JSON.stringify(demo.meta)); store.seq = store.log.length;
+  store.probe = { ok: true, text: '練習中' };
+  return snap;
+}
+function practiceRestore(store, snap) { store.mode = snap.mode; store.db = snap.db; store.log = snap.log; store.meta = snap.meta; store.seq = snap.seq; store.probe = snap.probe; }
+// 練習中のファイル名(本番のファイルと間違えないよう demo_ を付ける)
+function demoFileName(name) { return 'demo_' + name; }
+
 const Core = { MAX_STAFF, UNDO_MS, PENDING_MS, STALE_OPEN_MS, CLOCK_AHEAD_MS, MAX_PENDINGS, DISCLAIMER,
   staleOpen, fmtElapsed, undoDeadline, clockWarning, sequenceProblems, prunePendings, addPending,
+  setPendingMs, pendingMs, DEMO_PIN, makeDemoData, practiceSwap, practiceRestore, demoFileName,
   maxStaff, makePending, pendingExpired, candidatesFor, fmtDate, fmtHMS, fmtTime, fmtDateTime, fmtHM, fmtDateJa, monthKey, toInputValue, parseLocalDateTime,
   effectivePunches, pairShifts, shiftMinutes, shiftBreakMinutes, staffStatus, TYPE_JA, validatePunch, validateStaffName, canActivateMore,
   csvCell, toCSV, monthlySheetRows, rawRows, monthlyCSV, rawCSV, pinResetNotice, pinAfterRestore, hashPin, isPin, validateBackup, daysSince, SHEET_HEADER, RAW_HEADER };
@@ -575,7 +714,7 @@ function candButtons(cands, pd, stale) {
   }));
 }
 function ageText(pd) { return Math.max(0, Math.floor((Date.now() - pd.ts) / 1000)) + '秒前'; }
-function leftText(pd) { return 'あと' + Math.max(0, Math.ceil((pd.ts + C.PENDING_MS - Date.now()) / 1000)) + '秒'; }
+function leftText(pd) { return 'あと' + Math.max(0, Math.ceil((pd.ts + C.pendingMs() - Date.now()) / 1000)) + '秒'; }
 
 function renderMain() {
   const main = $('main'); main.textContent = '';
@@ -583,10 +722,11 @@ function renderMain() {
   const punches = getPunches();
   const active = getStaff().filter(s => s.active);
   if (S.msg) main.append(h('div', { class: 'banner' + (S.msg.err ? ' err' : '') }, S.msg.text));
-  if (Store.mode === 'memory') main.append(h('div', { class: 'banner err' }, 'このブラウザでは記録を保存できません。ページを閉じると記録が消えます。(プライベートモードを使っていませんか?)'));
-  else if (!Store.probe.ok) main.append(h('div', { class: 'banner err' }, '保存テストに失敗しました(' + Store.probe.text + ')。記録が残らないかもしれません。別のブラウザで開き直してください。'));
+  if (!S.practice && Store.mode === 'memory') main.append(h('div', { class: 'banner err' }, 'このブラウザでは記録を保存できません。ページを閉じると記録が消えます。(プライベートモードを使っていませんか?)'));
+  else if (!S.practice && !Store.probe.ok) main.append(h('div', { class: 'banner err' }, '保存テストに失敗しました(' + Store.probe.text + ')。記録が残らないかもしれません。別のブラウザで開き直してください。'));
+  if (!S.practice && !S.pends.length && Store.meta.disclaimerAckAt && !tutLoad().seen) main.append(tutInviteCard());
   const bdays = C.daysSince(Store.meta.lastBackupAt, Date.now());
-  if (Store.log.length && (bdays === null || bdays >= 30)) main.append(h('div', { class: 'banner' }, bdays === null ? 'まだバックアップがありません(管理画面から保存)' : 'バックアップから' + bdays + '日たっています(管理画面から保存)'));
+  if (!S.practice && Store.log.length && (bdays === null || bdays >= 30)) main.append(h('div', { class: 'banner' }, bdays === null ? 'まだバックアップがありません(管理画面から保存)' : 'バックアップから' + bdays + '日たっています(管理画面から保存)'));
   const working = active.filter(s => C.staffStatus(punches, s.id).working);
   const resting = working.filter(s => C.staffStatus(punches, s.id).onBreak).length;
   $('workingCount').textContent = active.length ? '出勤中 ' + working.length + '人 / ' + active.length + '人' + (resting ? '(うち休憩中 ' + resting + '人)' : '') : '';
@@ -597,7 +737,7 @@ function renderMain() {
 
   if (!act) {
     if (S.repress) main.append(h('p', { class: 'hint' }, '自分の分を押してください'));
-    const actBtn = (cls, type, ic, label) => h('button', { type: 'button', class: 'act ' + cls, onclick: () => press(type) }, h('span', { class: 'ic', 'aria-hidden': 'true' }, ic), label);
+    const actBtn = (cls, type, ic, label) => h('button', { type: 'button', class: 'act ' + cls, 'data-tt': 'btn-' + type, onclick: () => press(type) }, h('span', { class: 'ic', 'aria-hidden': 'true' }, ic), label);
     main.append(h('div', { class: 'actions' },
       actBtn('in', 'in', '☀️', '出勤'),
       actBtn('out', 'out', '🌙', '退勤'),
@@ -629,7 +769,7 @@ function renderMain() {
         candButtons(stale, act, true));
     }
     main.append(h('div', { class: 'row', style: 'margin-top:14px' },
-      h('button', { type: 'button', class: 'btn primary', onclick: () => { S.repress = true; renderMain(); } }, '自分の分を押し直す'),
+      h('button', { type: 'button', class: 'btn primary', 'data-tt': 'repress', onclick: () => { S.repress = true; renderMain(); } }, '自分の分を押し直す'),
       h('button', { type: 'button', class: 'btn', onclick: () => dropPending(act) }, 'やめる'),
       h('span', { class: 'muted pLeft', 'data-ts': act.ts }, leftText(act))));
   }
@@ -706,7 +846,7 @@ function showResult(name, type, ts, punchId, staffId, confirmedAt) {
   const box = $('resultBox'); box.textContent = '';
   box.append(h('div', { class: 'overlay-result ' + type, role: 'status' }, name + 'さん ' + C.TYPE_JA_(type), h('span', { class: 't' }, C.fmtTime(ts))));
   resultTimer = setTimeout(() => box.textContent = '', 5000);
-  const ub = $('undoBox'); const until = C.undoDeadline(confirmedAt);     // 名前を確定した時刻から10秒
+  const ub = $('undoBox'); const until = C.undoDeadline(confirmedAt) + (S.practice ? 590000 : 0);     // 名前を確定した時刻から10秒(練習中だけ長い)
   const draw = () => {
     const left = Math.ceil((until - Date.now()) / 1000);
     if (left <= 0) { ub.textContent = ''; clearInterval(undoTimer); return; }
@@ -735,7 +875,7 @@ function renderAdmin() {
   const box = $('adminBox'); box.textContent = '';
   if (!S.adminOpen) return;
   const panel = h('div', { class: 'panel' });
-  panel.append(h('header', null, h('h2', { style: 'margin:0' }, '管理画面'), h('button', { class: 'btn', type: 'button', onclick: closeAdmin }, '閉じる')));
+  panel.append(h('header', null, h('h2', { style: 'margin:0' }, '管理画面'), h('button', { class: 'btn', type: 'button', 'data-tt': 'admin-close', onclick: closeAdmin }, '閉じる')));
   if (S.msg) panel.append(h('div', { class: 'banner' + (S.msg.err ? ' err' : '') }, S.msg.text));
   if (!S.unlocked) panel.append(pinForm()); else panel.append(adminTabs());
   box.append(h('div', { class: 'modal' }, panel));
@@ -757,11 +897,11 @@ function pinForm() {
       S.unlocked = true; S.msg = null; renderAdmin();
     }
   });
-  return h('div', null,
+  return h('div', { 'data-tt': 'pinform' },
     h('p', null, first ? '初めに、暗証番号(数字4桁)を決めてください。' : '暗証番号(数字4桁)を入れてください。'),
     h('div', { class: 'row' }, p1, first ? p2 : null, h('button', { class: 'btn primary', type: 'button', onclick: go }, first ? '決める' : '開く')),
     first ? h('p', { class: 'muted' }, '2つの欄に同じ番号を入れます。この番号は、間違って管理画面を開かないためのものです。強い鍵ではありません。') : null,
-    first ? null : (S.forgot ? forgotForm() : h('div', { class: 'row' }, h('button', { class: 'btn', type: 'button', onclick: () => { S.forgot = true; S.msg = null; renderAdmin(); } }, '番号を忘れた'))),
+    first ? null : (S.forgot ? forgotForm() : h('div', { class: 'row' }, h('button', { class: 'btn', type: 'button', 'data-tt': 'forgot', onclick: () => { S.forgot = true; S.msg = null; renderAdmin(); } }, '番号を忘れた'))),
     h('p', { class: 'muted' }, '忘れたとき: 「番号を忘れた」から、その場で作り直せます。記録はそのまま残ります。'));
 }
 
@@ -770,7 +910,7 @@ function forgotForm() {
   const ok = h('input', { type: 'text', autocomplete: 'off', 'aria-label': '確認(作り直す、と入力)', style: 'width:8em', placeholder: '作り直す' });
   const a = h('input', { type: 'password', inputmode: 'numeric', maxlength: 4, autocomplete: 'off', 'aria-label': '新しい暗証番号', style: 'width:8em' });
   const b = h('input', { type: 'password', inputmode: 'numeric', maxlength: 4, autocomplete: 'off', 'aria-label': '新しい暗証番号(確認)', style: 'width:8em' });
-  return h('div', null,
+  return h('div', { 'data-tt': 'forgotform' },
     h('p', null, '記録はそのまま残ります。番号だけ作り直します。作り直したことは記録に残り、管理画面に表示されます。'),
     h('p', null, '確認のため、下の欄に「作り直す」と打ってください。'), h('div', { class: 'row' }, ok),
     h('p', null, '新しい番号(数字4桁)を2回入れます。'),
@@ -790,7 +930,7 @@ function adminTabs() {
   const wrap = h('div');
   const pn = C.pinResetNotice(Store.log, Date.now());
   if (pn) wrap.append(h('div', { class: 'banner' }, pn));
-  wrap.append(h('div', { class: 'tabs' }, tabs.map(([k, l]) => h('button', { type: 'button', class: S.tab === k ? 'on' : '', onclick: () => { S.tab = k; S.msg = null; S.editing = null; renderAdmin(); } }, l))));
+  wrap.append(h('div', { class: 'tabs' }, tabs.map(([k, l]) => h('button', { type: 'button', class: S.tab === k ? 'on' : '', 'data-tt': 'tab-' + k, onclick: () => { S.tab = k; S.msg = null; S.editing = null; renderAdmin(); } }, l))));
   wrap.append({ staff: tabStaff, fix: tabFix, csv: tabCsv, backup: tabBackup, pin: tabPin }[S.tab]());
   wrap.append(h('p', { class: 'muted' }, '保存先: ' + ({ indexeddb: 'このブラウザ(IndexedDB)', localstorage: 'このブラウザ(localStorage)', memory: '保存できません(メモリのみ)' }[Store.mode]) + ' / 時刻はこの端末の時計 / 労務の判断はしません。'));
   wrap.append(h('p', { class: 'muted' }, backupLine()));
@@ -800,18 +940,18 @@ function adminTabs() {
 // --- スタッフ ---
 function tabStaff() {
   const staff = getStaff(); const wrap = h('div');
-  wrap.append(h('p', { class: 'muted' }, '使えるのは休止していない人で最大' + C.MAX_STAFF + '人です(いま ' + staff.filter(s => s.active).length + '人)。削除はできません。休止にすると画面から消えます(記録は残ります)。'));
+  wrap.append(h('p', { class: 'muted', 'data-tt': 'staffnote' }, '使えるのは休止していない人で最大' + C.MAX_STAFF + '人です(いま ' + staff.filter(s => s.active).length + '人)。削除はできません。休止にすると画面から消えます(記録は残ります)。'));
   const saveStaff = async list => { await Store.setMeta('staff', list); };
   const tbody = h('tbody');
   staff.forEach((s, i) => {
     const inp = h('input', { type: 'text', value: s.name, maxlength: 20, 'aria-label': '名前', style: 'width:11em' });
-    tbody.append(h('tr', null,
+    tbody.append(h('tr', { 'data-tt': 'row-' + i },
       h('td', null, inp),
       h('td', null, h('button', { class: 'btn', type: 'button', onclick: () => guarded(async () => {
         const e = C.validateStaffName(inp.value, staff, s.id); if (e) { flash(e, true); return; }
         await saveStaff(staff.map(x => x.id === s.id ? Object.assign({}, x, { name: inp.value.trim() }) : x)); flash('名前を変えました'); }) }, '名前を保存')),
       h('td', null, s.active ? '使用中' : '休止'),
-      h('td', null, h('button', { class: 'btn', type: 'button', onclick: () => guarded(async () => {
+      h('td', null, h('button', { class: 'btn', type: 'button', 'data-tt': 'pause-' + i, onclick: () => guarded(async () => {
         if (!s.active && !C.canActivateMore(staff)) { flash('使える人数は最大' + C.MAX_STAFF + '人です', true); return; }
         await saveStaff(staff.map(x => x.id === s.id ? Object.assign({}, x, { active: !x.active }) : x)); renderAdmin(); }) }, s.active ? '休止にする' : '再開する')),
       h('td', null,
@@ -820,7 +960,7 @@ function tabStaff() {
   });
   wrap.append(h('div', { class: 'tablewrap' }, h('table', null, h('thead', null, h('tr', null, ['名前', '', '状態', '', '並び替え'].map(t => h('th', null, t)))), tbody)));
   const nn = h('input', { type: 'text', maxlength: 20, placeholder: '新しい名前', 'aria-label': '新しい名前' });
-  wrap.append(h('div', { class: 'row' }, nn, h('button', { class: 'btn primary', type: 'button', onclick: () => guarded(async () => {
+  wrap.append(h('div', { class: 'row', 'data-tt': 'staffadd' }, nn, h('button', { class: 'btn primary', type: 'button', onclick: () => guarded(async () => {
     if (!C.canActivateMore(staff)) { flash('使える人数は最大' + C.MAX_STAFF + '人です。誰かを休止にしてください', true); return; }
     const e = C.validateStaffName(nn.value, staff, null); if (e) { flash(e, true); return; }
     await saveStaff(staff.concat([{ id: uid('st'), name: nn.value.trim(), active: true }])); flash('追加しました'); }) }, '追加')));
@@ -839,10 +979,10 @@ function monthPicker(onchange) {
 function tabFix() {
   const wrap = h('div'); const punches = getPunches(); const staff = getStaff();
   wrap.append(h('p', { class: 'muted' }, '修正しても元の時刻は消えません。「元の時刻・修正後・理由・修正日時」が記録に残ります。'));
-  wrap.append(h('div', { class: 'row' }, '月: ', monthPicker(renderAdmin)));
+  wrap.append(h('div', { class: 'row', 'data-tt': 'monthrow' }, '月: ', monthPicker(renderAdmin)));
   if (S.editing) wrap.append(editForm(S.editing));
   else {
-    wrap.append(h('div', { class: 'row' }, h('button', { class: 'btn primary', type: 'button', onclick: () => { S.editing = { mode: 'add' }; renderAdmin(); } }, '打刻を追加(押し忘れ)')));
+    wrap.append(h('div', { class: 'row' }, h('button', { class: 'btn primary', type: 'button', 'data-tt': 'addpunch', onclick: () => { S.editing = { mode: 'add' }; renderAdmin(); } }, '打刻を追加(押し忘れ)')));
   }
   const list = punches.filter(p => C.monthKey(p.ts) === S.month).sort((a, b) => a.ts - b.ts || a.idx - b.idx);
   if (!list.length) wrap.append(h('p', { class: 'hint' }, 'この月の打刻はありません。'));
@@ -873,7 +1013,7 @@ function editForm(ed) {
   const punches = getPunches(); const staff = getStaff();
   const target = ed.id ? punches.find(p => p.id === ed.id) : null;
   const reason = h('input', { type: 'text', placeholder: '理由(必須)', maxlength: 100, style: 'width:min(24em,100%)', 'aria-label': '理由' });
-  const box = h('div', { class: 'banner' });
+  const box = h('div', { class: 'banner', 'data-tt': 'editform' });
   const cancel = h('button', { class: 'btn', type: 'button', onclick: () => { S.editing = null; renderAdmin(); } }, 'やめる');
   const needReason = () => { if (!reason.value.trim()) { flash('理由を入れてください', true); return false; } return true; };
   if (ed.mode === 'void') {
@@ -892,7 +1032,7 @@ function editForm(ed) {
     const sel = h('select', { 'aria-label': 'スタッフ' }, staff.map(s => h('option', { value: s.id }, s.name + (s.active ? '' : '(休止)'))));
     const ty = h('select', { 'aria-label': '種類' }, h('option', { value: 'in' }, '出勤'), h('option', { value: 'out' }, '退勤'),
       h('option', { value: 'bin' }, '休憩入り'), h('option', { value: 'bout' }, '休憩戻り'));
-    const dt = h('input', { type: 'datetime-local', step: 1, value: C.toInputValue(Date.now()), 'aria-label': '日時' });
+    const dt = h('input', { type: 'datetime-local', step: 1, value: C.toInputValue(S.practice && S.demoAddTs ? S.demoAddTs : Date.now()), 'aria-label': '日時' });
     box.append(h('p', null, '押し忘れた打刻を足します。「手入力」として記録に残ります。'), h('div', { class: 'row' }, sel, ty, dt, reason,
       h('button', { class: 'btn primary', type: 'button', onclick: () => guarded(async () => {
         if (!needReason()) return; const nts = C.parseLocalDateTime(dt.value); if (nts === null) { flash('日時が正しくありません', true); return; }
@@ -906,6 +1046,7 @@ function editForm(ed) {
 
 // --- CSV ---
 function download(name, text, type) {
+  if (S.practice) name = C.demoFileName(name);          // 練習中のファイルは demo_ で始まる
   const blob = new Blob([text], { type }); const url = URL.createObjectURL(blob);
   const a = h('a', { href: url, download: name }); document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
@@ -915,11 +1056,11 @@ function tabCsv() {
   wrap.append(h('div', { class: 'row' }, '月: ', monthPicker(renderAdmin)));
   wrap.append(h('p', { class: 'muted' }, 'UTF-8(BOM付き)です。Excelでそのまま開けます。退勤が無い日は退勤欄が空で、備考に「未退勤」と出ます。出勤日がこの月の勤務を載せます。「休憩(分)」は休憩の合計、「実働」は勤務時間から休憩を引いた時間です。'));
   wrap.append(h('div', { class: 'row' },
-    h('button', { class: 'btn primary', type: 'button', onclick: () => download('打刻_' + S.month + '.csv', '﻿' + C.monthlyCSV(punches, S.month, staff), 'text/csv;charset=utf-8') }, '月の勤務表をCSVで保存'),
-    h('button', { class: 'btn', type: 'button', onclick: () => download('打刻_生記録_' + S.month + '.csv', '﻿' + C.rawCSV(punches, S.month, staff, Store.log), 'text/csv;charset=utf-8') }, '打刻の生記録をCSVで保存')));
+    h('button', { class: 'btn primary', type: 'button', 'data-tt': 'csv-month', onclick: () => download('打刻_' + S.month + '.csv', '﻿' + C.monthlyCSV(punches, S.month, staff), 'text/csv;charset=utf-8') }, '月の勤務表をCSVで保存'),
+    h('button', { class: 'btn', type: 'button', 'data-tt': 'csv-raw', onclick: () => download('打刻_生記録_' + S.month + '.csv', '﻿' + C.rawCSV(punches, S.month, staff, Store.log), 'text/csv;charset=utf-8') }, '打刻の生記録をCSVで保存')));
   const rows = C.monthlySheetRows(punches, S.month, staff);
   wrap.append(h('p', { class: 'muted' }, 'この月の勤務: ' + rows.length + '行(下は先頭10行のプレビュー)'));
-  if (rows.length) wrap.append(h('div', { class: 'tablewrap' }, h('table', null, h('thead', null, h('tr', null, C.SHEET_HEADER.map(t => h('th', null, t)))),
+  if (rows.length) wrap.append(h('div', { class: 'tablewrap', 'data-tt': 'csv-preview' }, h('table', null, h('thead', null, h('tr', null, C.SHEET_HEADER.map(t => h('th', null, t)))),
     h('tbody', null, rows.slice(0, 10).map(r => h('tr', null, r.map(c => h('td', null, c === null ? '' : String(c)))))))));
   return wrap;
 }
@@ -931,12 +1072,12 @@ function tabBackup() {
   wrap.append(h('p', null, '最後のバックアップ: ' + (Store.meta.lastBackupAt ? C.fmtDateTime(Store.meta.lastBackupAt).slice(0, 16) + '(' + bd + '日前)' : 'まだありません')));
   const backupData = now => ({ app: 'timeclock', version: 1, exportedAt: now, staff: getStaff(), log: Store.log.map(e => { const c = Object.assign({}, e); delete c.seq; return c; }),
     meta: { pin: Store.meta.pin || null } });
-  wrap.append(h('div', { class: 'row' }, h('button', { class: 'btn primary', type: 'button', onclick: () => guarded(async () => {
+  wrap.append(h('div', { class: 'row' }, h('button', { class: 'btn primary', type: 'button', 'data-tt': 'bk-save', onclick: () => guarded(async () => {
     const now = Date.now();
     download('打刻バックアップ_' + C.fmtDate(now) + '.json', JSON.stringify(backupData(now), null, 1), 'application/json');
     await Store.setMeta('lastBackupAt', now); renderAdmin(); }) }, '全データをバックアップ(JSON)')));
   wrap.append(h('hr'), h('p', null, '復元: ファイルを選ぶと、いまのデータはすべてバックアップの内容に置き換わります。'),
-    h('div', { class: 'row' }, file, h('button', { class: 'btn danger', type: 'button', onclick: () => guarded(async () => {
+    h('div', { class: 'row', 'data-tt': 'bk-restore-row' }, file, h('button', { class: 'btn danger', type: 'button', onclick: () => guarded(async () => {
       const f = file.files && file.files[0]; if (!f) { flash('ファイルを選んでください', true); return; }
       let o; try { o = JSON.parse(await f.text()); } catch (e) { flash('ファイルを読めませんでした', true); return; }
       const err = C.validateBackup(o); if (err) { flash(err, true); return; }
@@ -948,7 +1089,7 @@ function tabBackup() {
       const meta = { staff: o.staff.map(s => ({ id: s.id, name: s.name, active: s.active !== false })), lastBackupAt: Store.meta.lastBackupAt || null, disclaimerAckAt: Store.meta.disclaimerAckAt || null };
       const keptPin = C.pinAfterRestore(Store.meta.pin, o.meta && o.meta.pin);
       if (keptPin) meta.pin = keptPin;
-      await Store.replaceAll(o.log, meta); S.unlocked = false; S.pends = []; S.repress = false; flash('復元しました。暗証番号は、いまの番号のままです。(復元前のデータは「復元前の自動保存」のファイルに入っています)'); }) }, '復元する')));
+      await Store.replaceAll(o.log, meta); if (S.practice) S.restoredAt = Date.now(); S.unlocked = false; S.pends = []; S.repress = false; flash('復元しました。暗証番号は、いまの番号のままです。(復元前のデータは「復元前の自動保存」のファイルに入っています)'); }) }, '復元する')));
   return wrap;
 }
 
@@ -956,7 +1097,7 @@ function tabBackup() {
 function tabPin() {
   const a = h('input', { type: 'password', inputmode: 'numeric', maxlength: 4, 'aria-label': '新しい暗証番号', style: 'width:8em' });
   const b = h('input', { type: 'password', inputmode: 'numeric', maxlength: 4, 'aria-label': '確認', style: 'width:8em' });
-  return h('div', null, h('p', null, '新しい暗証番号(数字4桁)を2回入れます。'), h('div', { class: 'row' }, a, b,
+  return h('div', { 'data-tt': 'pintab' }, h('p', null, '新しい暗証番号(数字4桁)を2回入れます。'), h('div', { class: 'row' }, a, b,
     h('button', { class: 'btn primary', type: 'button', onclick: () => guarded(async () => {
       if (!C.isPin(a.value)) { flash('数字4桁で入れてください', true); return; } if (a.value !== b.value) { flash('2回の番号が違います', true); return; }
       const salt = uid('s'); await Store.setMeta('pin', { salt, hash: C.hashPin(a.value, salt) }); flash('変更しました'); }) }, '変更する')));
@@ -968,11 +1109,419 @@ function showDisclaimer() {
   box.append(h('div', { class: 'modal', style: 'z-index:70' }, h('div', { class: 'panel', style: 'max-width:560px;margin-top:12vh' },
     h('h2', null, 'ご利用の前に'), h('p', null, C.DISCLAIMER),
     h('p', { class: 'muted' }, '記録はこの端末・このブラウザの中だけに保存されます。1つのURLをブックマークして使い、タブは1つだけ開いてください。プライベートブラウズでは使わないでください。月に1回は管理画面でバックアップを保存してください。'),
-    h('div', { class: 'row' }, h('button', { class: 'btn primary', type: 'button', onclick: () => guarded(async () => { await Store.setMeta('disclaimerAckAt', Date.now()); box.textContent = ''; }) }, '読みました')))));
+    h('div', { class: 'row' }, h('button', { class: 'btn primary', type: 'button', onclick: () => guarded(async () => { await Store.setMeta('disclaimerAckAt', Date.now()); box.textContent = ''; renderMain(); }) }, '読みました')))));
 }
 
+// ---------- チュートリアル(練習モード) ----------
+// 練習中は保存先を練習用のメモリに差し替える(C.practiceSwap)。本番の記録・暗証番号・設定には触れない。
+// 「やめる」「できました」のどちらでも、本番の保存先と画面の状態をそのまま戻す。
+// 進み具合の印(済・初回案内)だけは、別の入れ物 localStorage の 'timeclock_tutorial_v1' に置く(打刻の記録とは別・通信なし)。
+const TUT_KEY = 'timeclock_tutorial_v1';
+function tutLoad() { try { return Object.assign({ seen: false, done: {} }, JSON.parse(localStorage.getItem(TUT_KEY) || '{}')); } catch (e) { return { seen: false, done: {} }; } }
+function tutSave(o) { try { localStorage.setItem(TUT_KEY, JSON.stringify(o)); } catch (e) {} }
+
+const PR = { snap: null, saveS: null };
+function practiceEnter(kind) {
+  if (PR.snap) return;
+  clearTimeout(resultTimer); clearInterval(undoTimer); $('resultBox').textContent = ''; $('undoBox').textContent = ''; $('adminBox').textContent = '';
+  const demo = C.makeDemoData(kind, Date.now());
+  PR.snap = C.practiceSwap(Store, demo);
+  PR.saveS = { pends: S.pends, repress: S.repress, adminOpen: S.adminOpen, unlocked: S.unlocked, tab: S.tab, msg: S.msg, month: S.month, editing: S.editing, forgot: S.forgot, clockOkDay: S.clockOkDay };
+  Object.assign(S, { pends: [], repress: false, adminOpen: false, unlocked: false, tab: 'staff', msg: null, month: demo.month, editing: null, forgot: false, clockOkDay: null,
+    practice: true, demoAddTs: demo.addTs, restoredAt: 0 });
+  C.setPendingMs(300000);
+  document.body.classList.add('practice'); $('practiceBand').classList.remove('hidden');
+  renderMain();
+}
+function practiceLeave() {
+  if (!PR.snap) return;
+  clearTimeout(resultTimer); clearInterval(undoTimer); $('resultBox').textContent = ''; $('undoBox').textContent = ''; $('adminBox').textContent = '';
+  C.practiceRestore(Store, PR.snap);
+  Object.assign(S, PR.saveS, { practice: false, demoAddTs: 0, restoredAt: 0 });
+  PR.snap = null; PR.saveS = null;
+  C.setPendingMs(C.PENDING_MS);
+  document.body.classList.remove('practice'); $('practiceBand').classList.add('hidden');
+  renderMain();
+}
+
+const T = { lesson: null, i: 0, steps: [], snaps: [], timer: null, adv: false, n: 0, h: '', t0: 0, missingSince: 0, retries: 0, scrolls: 0, finished: false, layer: null, bubble: null };
+const qs = s => document.querySelector(s);
+const clone = o => JSON.parse(JSON.stringify(o));
+
+// 各段の最初の状態を控え、「戻る」「見失った時」にそこへ戻す(練習用データだけ)
+function snapTake() {
+  return { log: clone(Store.log), meta: clone(Store.meta), seq: Store.seq,
+    S: clone({ pends: S.pends, repress: S.repress, adminOpen: S.adminOpen, unlocked: S.unlocked, tab: S.tab, editing: S.editing, forgot: S.forgot, month: S.month }) };
+}
+function snapPut(sn) {
+  clearTimeout(resultTimer); clearInterval(undoTimer); $('resultBox').textContent = ''; $('undoBox').textContent = '';
+  Store.log = clone(sn.log); Store.meta = clone(sn.meta); Store.seq = sn.seq;
+  const s = clone(sn.S); s.pends.forEach(p => { p.ts = Date.now() - 1000; });
+  Object.assign(S, s, { msg: null });
+  renderMain(); if (S.adminOpen) renderAdmin(); else $('adminBox').textContent = '';
+}
+
+function ensureAdmin(tab) {
+  let ch = false;
+  if (!S.adminOpen) { S.adminOpen = true; ch = true; }
+  if (!S.unlocked) { S.unlocked = true; ch = true; }
+  if (tab && S.tab !== tab) { S.tab = tab; S.editing = null; ch = true; }
+  if (S.forgot) { S.forgot = false; ch = true; }
+  if (ch) { S.msg = null; renderAdmin(); }
+}
+function idleMain() {
+  if (S.adminOpen) closeAdmin();
+  if (S.pends.length || S.repress) { S.pends = []; S.repress = false; S.msg = null; renderMain(); }
+}
+function reshowUndo() {
+  const last = getPunches().filter(p => !p.voided).sort((a, b) => b.idx - a.idx)[0];
+  if (last) showResult(staffName(last.staffId), last.type, last.ts, last.id, last.staffId, Date.now());
+}
+function firstRowPunch() { return getPunches().filter(p => C.monthKey(p.ts) === S.month).sort((a, b) => a.ts - b.ts || a.idx - b.idx)[0]; }
+const countKind = (k, f) => Store.log.filter(e => e.kind === k && (!f || f(e))).length;
+
+// ---- 段(ステップ)の部品。type: tap=その本物のボタンを押す / until=入力して条件がそろうまで / next=説明だけ[次へ] ----
+const NAME_SEL = '#main .staff-grid button.staff';
+const adminTap = text => ({ sel: '#adminBtn', type: 'tap', text, ensure() { idleMain(); } });
+const unlockStep = first => ({ sel: '[data-tt=pinform]', type: 'until', until: () => S.unlocked,
+  text: first ? '数字4桁を、2つの欄に同じ番号で入れて「決める」をタップ(練習なので何でもOK)' : '練習用の暗証番号は「1234」です。入れて「開く」をタップ',
+  ensure() { if (!S.adminOpen || S.unlocked || S.forgot) { S.adminOpen = true; S.unlocked = false; S.forgot = false; S.msg = null; renderAdmin(); } } });
+const tabTap = (k, text) => ({ sel: '[data-tt=tab-' + k + ']', type: 'tap', text, ensure() { ensureAdmin('staff'); } });
+const nameTap = text => ({ sel: NAME_SEL, type: 'tap', text: text || '次はここをタップ:名前(誰でもOK)' });
+const infoStep = (text, sel, ensure, pic) => ({ sel: sel || null, type: 'next', text, ensure, pic });
+const closeTap = tab => ({ sel: '[data-tt=admin-close]', type: 'tap', text: '次はここをタップ:「閉じる」', ensure() { ensureAdmin(tab || 'staff'); } });
+
+function shareSvg() {
+  const s = h('span'); s.innerHTML = '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1565c0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="M8 7l4-4 4 4"/><path d="M5 11v9h14v-9"/></svg>';
+  return s;
+}
+function picAddHome() {
+  const card = (ic, t) => h('div', { class: 'pc' }, h('div', { class: 'pci' }, ic), h('div', null, t));
+  const ar = () => h('div', { class: 'pca' }, '➜');
+  return h('div', { class: 'tutPic' },
+    h('div', { class: 'pcTitle' }, 'iPhone・iPad(Safari)'),
+    h('div', { class: 'pcRow' }, card(shareSvg(), '下の共有ボタン'), ar(), card('➕', '「ホーム画面に追加」'), ar(), card('✅', '「追加」')),
+    h('div', { class: 'pcTitle' }, 'Android(Chrome)'),
+    h('div', { class: 'pcRow' }, card('⋮', '右上のメニュー'), ar(), card('📲', '「ホーム画面に追加」'), ar(), card('✅', '「追加」')),
+    h('div', { class: 'muted', style: 'margin-top:6px' }, 'これは端末の操作なので、ここでは押せません。追加したら、これからはそのアイコンから開きます。'));
+}
+
+const LESSONS = [
+  { id: 'setup', title: '① はじめの設定', sub: '暗証番号・スタッフ登録・ホーム画面に追加', demo: 'empty', steps: () => [
+    adminTap('はじめに「管理画面」をタップ'),
+    unlockStep(true),
+    { sel: '[data-tt=staffadd]', type: 'until', text: 'スタッフの名前を入れて「追加」をタップ(例: さくら)',
+      ensure() { ensureAdmin('staff'); }, until: () => getStaff().length >= 1 },
+    { sel: '[data-tt=staffadd]', type: 'until', text: 'もう1人、名前を入れて「追加」をタップ(例: たろう)',
+      ensure() { ensureAdmin('staff'); }, until: () => getStaff().length >= 2 },
+    infoStep('追加した人はここに並びます。名前の直し・休止・並び替えもここです(⑦で練習できます)', '#adminBox .tablewrap', () => ensureAdmin('staff')),
+    closeTap('staff'),
+    infoStep('スマホ・タブレットは「ホーム画面に追加」しておくと、アイコンからすぐ開けます', null, () => idleMain(), picAddHome),
+  ] },
+  { id: 'punch', title: '② 打刻のしかた', sub: '出勤→休憩→戻り→退勤・取り消す・自分の分を押し直す', demo: 'staff', steps: () => [
+    { sel: '[data-tt=btn-in]', type: 'tap', text: '次はここをタップ:「出勤」', ensure() { idleMain(); } },
+    infoStep('押した瞬間の時刻が、ここに止まって出ます。時計が進んでも、この時刻で記録されます', '#main .frozen'),
+    infoStep('もし他の人の分を押してしまった時は「自分の分を押し直す」。今の時刻でもう一度押せます', '[data-tt=repress]'),
+    nameTap('次はここをタップ:名前(誰でもOK)→ 記録されます'),
+    { sel: '#undoBox button', type: 'tap', text: '間違えた時は「取り消す」。押してみましょう(本番は、名前を選んでから10秒だけ出ます)',
+      ensure() { if (!qs('#undoBox button')) reshowUndo(); } },
+    { sel: '[data-tt=btn-in]', type: 'tap', text: 'もう一度「出勤」をタップ', ensure() { idleMain(); } },
+    nameTap(),
+    { sel: '[data-tt=btn-bin]', type: 'tap', text: '休憩に入る時は「休憩」をタップ', ensure() { idleMain(); } },
+    nameTap(),
+    { sel: '[data-tt=btn-bout]', type: 'tap', text: '休憩から戻る時は「戻り」をタップ', ensure() { idleMain(); } },
+    nameTap(),
+    { sel: '[data-tt=btn-out]', type: 'tap', text: '帰る時は「退勤」をタップ', ensure() { idleMain(); } },
+    nameTap(),
+    infoStep('押し忘れた時は、管理画面で足したり直したりできます(③)。出勤中のまま12時間たつと「退勤の押し忘れ?」と出ます', null, () => idleMain()),
+  ] },
+  { id: 'fix', title: '③ 打刻の修正・追加', sub: '管理画面で時刻を直す・取り消す・押し忘れを足す', demo: 'full', steps: () => [
+    adminTap('「管理画面」をタップ'),
+    unlockStep(false),
+    tabTap('fix', '次はここをタップ:「打刻の修正」'),
+    infoStep('月ごとの打刻の一覧です。見たい月はここで選べます(練習では先月分が入っています)', '[data-tt=monthrow]', () => ensureAdmin('fix')),
+    { sel: '#adminBox tbody tr:first-child .btn:nth-of-type(1)', type: 'tap', text: '一番上の打刻の「時刻を直す」をタップ', ensure() { ensureAdmin('fix'); } },
+    { sel: '[data-tt=editform]', type: 'until', text: '新しい日時を選び、理由(必須)を入れて「修正する」をタップ。元の時刻は消えずに残ります',
+      ensure() { ensureAdmin('fix'); T.n = countKind('correct'); if (!S.editing) { S.editing = { mode: 'edit', id: firstRowPunch().id }; renderAdmin(); } },
+      until: () => countKind('correct') > T.n },
+    infoStep('間違って押した打刻は、この「取り消す」で消せます(記録には「取消」として残ります)', '#adminBox tbody tr:first-child .btn:nth-of-type(2)', () => ensureAdmin('fix')),
+    { sel: '[data-tt=addpunch]', type: 'tap', text: '押し忘れた打刻は「打刻を追加」から。タップしてみましょう', ensure() { ensureAdmin('fix'); } },
+    { sel: '[data-tt=editform]', type: 'until', text: 'スタッフ・種類・日時を選び、理由(必須)を入れて「追加する」をタップ',
+      ensure() { ensureAdmin('fix'); T.n = countKind('punch', e => e.manual); if (!S.editing) { S.editing = { mode: 'add' }; renderAdmin(); } },
+      until: () => countKind('punch', e => e.manual) > T.n },
+    infoStep('直した所・足した所は、CSVの「修正あり」の列に出ます。元の時刻は記録に残っています', null, () => ensureAdmin('fix')),
+  ] },
+  { id: 'csv', title: '④ CSVをデモの数字でダウンロード', sub: '月の勤務表を保存してみる(ファイル名は demo_ から)', demo: 'full', steps: () => [
+    adminTap('「管理画面」をタップ'),
+    unlockStep(false),
+    tabTap('csv', '次はここをタップ:「CSV」'),
+    { sel: '[data-tt=csv-month]', type: 'tap', text: '「月の勤務表をCSVで保存」をタップ。練習用の数字のファイル(demo_ から始まる名前)が保存されます', ensure() { ensureAdmin('csv'); } },
+    infoStep('保存したファイルは、端末の「ダウンロード」(iPhone・iPadは「ファイル」アプリ)に入ります。Excelなどでそのまま開けます', null, () => ensureAdmin('csv')),
+    { sel: '[data-tt=csv-raw]', type: 'tap', text: '「打刻の生記録をCSVで保存」もタップ。修正や取り消しも全部入った記録です', ensure() { ensureAdmin('csv'); } },
+    infoStep('ここは勤務表の先頭10行のプレビューです。休憩と実働(勤務から休憩を引いた時間)も出ます', '[data-tt=csv-preview]', () => ensureAdmin('csv')),
+  ] },
+  { id: 'backup', title: '⑤ バックアップの取り方と戻し方', sub: '練習用のデータで「保存→戻す」を体験', demo: 'full', steps: () => [
+    adminTap('「管理画面」をタップ'),
+    unlockStep(false),
+    tabTap('backup', '次はここをタップ:「バックアップ」'),
+    { sel: '[data-tt=bk-save]', type: 'tap', text: '「全データをバックアップ(JSON)」をタップ。練習用のデータが demo_ から始まるファイルで保存されます', ensure() { ensureAdmin('backup'); } },
+    infoStep('本番では月に1回これを押し、ファイルをメールやクラウドにも置いておくと安心です。端末を替える時もこのファイルで引っこしできます', null, () => ensureAdmin('backup')),
+    { sel: '[data-tt=bk-restore-row]', type: 'until', text: '「ファイルを選択」をタップして、いま保存した demo_ のファイルを選んでください',
+      ensure() { ensureAdmin('backup'); },
+      until: () => { const el = qs('[data-tt=bk-restore-row] input[type=file]'); return !!(el && el.files && el.files.length); } },
+    { sel: '[data-tt=bk-restore-row]', type: 'until', text: '「復元する」をタップ。確認が出たらOKを選びます(練習用のデータが置き換わるだけです)',
+      ensure() { ensureAdmin('backup'); T.t0 = Date.now(); }, until: () => S.restoredAt && S.restoredAt >= T.t0 },
+    infoStep('戻りました。復元する前には、いまのデータが自動でファイルに保存されます。暗証番号は「いまの番号」のままです', null, () => { S.adminOpen = false; $('adminBox').textContent = ''; renderMain(); }),
+  ] },
+  { id: 'pin', title: '⑥ 暗証番号を忘れた時', sub: '番号の変えかた・作り直しかた', demo: 'staff', steps: () => [
+    adminTap('「管理画面」をタップ'),
+    unlockStep(false),
+    tabTap('pin', '次はここをタップ:「暗証番号」(番号を変えたい時はここです)'),
+    { sel: '[data-tt=pintab]', type: 'until', text: '新しい4桁を2回入れて「変更する」をタップ(練習なので何でもOK)',
+      ensure() { ensureAdmin('pin'); T.h = Store.meta.pin ? Store.meta.pin.hash : ''; },
+      until: () => !!(Store.meta.pin && Store.meta.pin.hash !== T.h) },
+    closeTap('pin'),
+    { sel: '#adminBtn', type: 'tap', text: '次は「忘れた時」。もう一度「管理画面」をタップ', ensure() { idleMain(); } },
+    { sel: '[data-tt=forgot]', type: 'tap', text: '番号を思い出せない時は「番号を忘れた」をタップ',
+      ensure() { if (!S.adminOpen || S.unlocked || S.forgot) { S.adminOpen = true; S.unlocked = false; S.forgot = false; S.msg = null; renderAdmin(); } } },
+    { sel: '[data-tt=forgotform]', type: 'until', text: '「作り直す」と打ち、新しい番号を2回入れて「作り直す」ボタンをタップ',
+      ensure() { T.n = countKind('pinreset'); if (!S.forgot || !S.adminOpen || S.unlocked) { S.adminOpen = true; S.unlocked = false; S.forgot = true; S.msg = null; renderAdmin(); } },
+      until: () => countKind('pinreset') > T.n },
+    infoStep('スタッフと打刻の記録はそのまま残ります。作り直した日時は、記録(CSV)と管理画面に残ります', null, () => { S.adminOpen = true; S.unlocked = false; S.forgot = false; renderAdmin(); }),
+  ] },
+  { id: 'staff', title: '⑦ スタッフの休止・人数(10人まで)', sub: '休止・再開・名前の直し・並び替え', demo: 'ten', steps: () => [
+    adminTap('「管理画面」をタップ'),
+    unlockStep(false),
+    infoStep('使えるのは、休止していない人で最大10人です。練習用に10人が入っています', '[data-tt=staffnote]', () => ensureAdmin('staff')),
+    { sel: '[data-tt=staffadd]', type: 'until', text: '名前を入れて「追加」をタップ。11人目は断られます',
+      ensure() { ensureAdmin('staff'); S.msg = null; renderAdmin(); }, until: () => !!(S.msg && /最大/.test(S.msg.text)) },
+    { sel: '[data-tt=pause-0]', type: 'tap', text: '誰かの「休止にする」をタップ(辞めた人・長い休みの人に。記録は残ります)', ensure() { ensureAdmin('staff'); } },
+    { sel: '[data-tt=staffadd]', type: 'until', text: '1人あきました。名前を入れて「追加」をタップすると、今度は追加できます',
+      ensure() { ensureAdmin('staff'); T.n = getStaff().length; }, until: () => getStaff().length > T.n },
+    infoStep('名前の直しは「名前を保存」、並び替えは「↑」「↓」。休止した人は「再開する」で戻せます(削除はできません)', '[data-tt=row-0]', () => ensureAdmin('staff')),
+  ] },
+];
+
+// ---- 画面(暗くして、押す所だけ丸く明るく抜く) ----
+function buildLayer() {
+  const L = h('div', { id: 'tutLayer' });
+  ['t', 'b', 'l', 'r', 'h'].forEach(k => L.append(h('div', { class: 'tb', 'data-k': k })));
+  L.append(h('div', { class: 'tdim', style: 'display:none' }), h('div', { class: 'tring', style: 'display:none' }), h('div', { class: 'tfinger', style: 'display:none' }, '👆'), h('div', { class: 'tbubble' }));
+  document.body.append(L); T.layer = L; T.bubble = L.querySelector('.tbubble');
+  T.dako = dakoNode(false); T.dako.classList.add('dk-t'); L.append(T.dako); dakoPop(T.dako);
+}
+
+// ---------- ダコちゃん(案内キャラ) ----------
+// 絵は <template id="dakoTpl">(元絵 icon_src/dako.svg。icon_src/build_dako.py で作る)。表情 data-ex: n=ふつう p=指さし j=よろこび。
+// タップすると、押すたびに順番に5つの動き: ①跳ねる ②1回転 ③足をわちゃわちゃ ④照れて濃いピンク ⑤スミを吐いて消える(数秒後に端から戻る)。
+const DK = { n: 0 };
+const DK_ACTS = ['a1', 'a2', 'a3', 'a4', 'a5'];
+function dakoNode(mini) {
+  const d = document.createElement('span'); d.className = 'dk' + (mini ? ' dk-mini' : ''); d.setAttribute('data-ex', 'n');
+  d.setAttribute('role', 'img'); d.setAttribute('aria-label', 'ダコちゃん');
+  d.appendChild($('dakoTpl').content.cloneNode(true));
+  if (mini) d.querySelector('svg').setAttribute('viewBox', '16 6 68 64');
+  d.addEventListener('click', ev => { ev.stopPropagation(); ev.preventDefault(); if (!mini || dakoMiniOk()) dakoTap(d); });
+  return d;
+}
+function dakoMiniOk() {   // ふだんの画面では、打刻の最中(名前を選ぶ画面・結果・管理画面・案内など)は反応させない
+  return !(T.lesson || S.busy || S.adminOpen || S.pends.length || S.repress || S.practice || document.querySelector('.modal') || $('resultBox').firstChild || $('undoBox').firstChild);
+}
+function dakoPop(d) { dakoClear(d); void d.offsetWidth; d.classList.add('pop'); d._t = setTimeout(() => d.classList.remove('pop'), 600); }
+function dakoClear(d) { clearTimeout(d._t); d.classList.remove('pop', 'back', 'a1', 'a2', 'a3', 'a4', 'a5'); }
+function dakoTap(d) {
+  if (d.classList.contains('gone')) return;
+  dakoPlay(d, DK_ACTS[DK.n++ % DK_ACTS.length]);
+}
+function dakoPlay(d, k) {
+  dakoClear(d); clearTimeout(d._t2); void d.offsetWidth; d.classList.add(k);
+  if (k === 'a5') {
+    dakoInk(d);
+    d._t = setTimeout(() => { d.classList.remove('a5'); d.classList.add('gone'); d._t2 = setTimeout(() => dakoBack(d), 3200); }, 900);
+  } else d._t = setTimeout(() => d.classList.remove(k), k === 'a4' ? 1050 : 950);
+}
+function dakoBack(d) {                       // 近い方の画面の端から、そっと戻ってくる
+  const r = d.getBoundingClientRect(), W = document.documentElement.clientWidth;
+  d.style.setProperty('--bx', (r.left + r.width / 2 < W / 2 ? '-' : '') + '140px');
+  d.classList.remove('gone'); void d.offsetWidth; d.classList.add('back');
+  d._t = setTimeout(() => d.classList.remove('back'), 900);
+}
+function dakoInk(d) {                        // 黒いスミがふわっと広がって、1秒ちょっとで必ず消える(ボタンを隠したまま残さない・押せなくしない)
+  const r = d.getBoundingClientRect(); if (!r.width) return;
+  const box = document.createElement('div'); box.className = 'dkink'; box.style.left = (r.left + r.width / 2) + 'px'; box.style.top = (r.top + r.height / 2) + 'px';
+  [[-46, -30, 1.7], [44, -36, 1.9], [-58, 14, 1.5], [52, 18, 1.8], [0, -52, 1.6], [-14, 40, 2.0], [22, 6, 2.2]].forEach((v, i) => {
+    const b = document.createElement('i'); b.style.cssText = '--x:' + v[0] + 'px;--y:' + v[1] + 'px;--k:' + v[2] + ';--dl:' + (i * 0.03) + 's'; box.append(b); });
+  document.body.append(box); setTimeout(() => box.remove(), 1500);
+}
+function dakoPose(d, ex, pt, fx) {
+  if (d.getAttribute('data-ex') !== ex) d.setAttribute('data-ex', ex);
+  d.style.setProperty('--pt', pt); d.style.setProperty('--fx', fx);
+}
+// 吹き出しのそばに置く。押してほしい場所(丸・指)にかぶる所には置かない。置ける所が無ければ隠す。
+function dakoPlace(ring, finger) {
+  const d = T.dako, bt = T.bubble; if (!d || !bt) return;
+  const W = document.documentElement.clientWidth, H = window.innerHeight, dw = 64, dh = 64, br = bt.getBoundingClientRect();
+  const avoid = [];
+  if (ring) avoid.push({ l: ring.x1 - 10, t: ring.y1 - 10, r: ring.x2 + 10, b: ring.y2 + 10 });
+  if (finger) { const f = lq('.tfinger').getBoundingClientRect(); avoid.push({ l: f.left - 8, t: f.top - 8, r: f.right + 8, b: f.bottom + 8 }); }
+  const above = [[br.left + 8, br.top - dh + 8], [br.right - dw - 8, br.top - dh + 8]];
+  const below = [[br.left + 8, br.bottom - 8], [br.right - dw - 8, br.bottom - 8]];
+  const side = [[br.left - dw + 4, br.top + 8], [br.right - 4, br.top + 8]];
+  const ringAbove = ring && (ring.y1 + ring.y2) / 2 < (br.top + br.bottom) / 2;
+  const inside = [[br.right - dw - 10, br.bottom - dh - 8], [br.right - dw - 10, br.top + 8]];   // 画面が狭い時の最後の置き場所: 吹き出しの右の空き
+  const cands = (ringAbove ? below.concat(above) : above.concat(below)).concat(side, inside);
+  const hit = c => avoid.some(a => c[0] < a.r && c[0] + dw > a.l && c[1] < a.b && c[1] + dh > a.t);
+  const pick = cands.find(c => c[0] >= 2 && c[0] + dw <= W - 2 && c[1] >= 2 && c[1] + dh <= H - 2 && !hit(c));
+  if (!pick) { d.style.display = 'none'; return; }
+  d.style.display = ''; d.style.left = pick[0] + 'px'; d.style.top = pick[1] + 'px';
+  if (ring && finger) {
+    const cx = pick[0] + dw / 2, cy = pick[1] + dh / 2, rx = (ring.x1 + ring.x2) / 2, ry = (ring.y1 + ring.y2) / 2;
+    dakoPose(d, 'p', ry < cy ? '-35deg' : '30deg', rx < cx ? '-1' : '1');
+  } else dakoPose(d, 'n', '60deg', '1');
+}
+// ダコちゃんの口調: 「〜をタップ」を「〜をタップしてね」に(短く、やさしく、少しかわいく)
+const dakoTone = t => t.replace(/タップ(?=[:(。]|$)/g, 'タップしてね');
+function lq(s) { return T.layer.querySelector(s); }
+function setBox(el, x, y, w, hh) { el.style.left = x + 'px'; el.style.top = y + 'px'; el.style.width = Math.max(0, w) + 'px'; el.style.height = Math.max(0, hh) + 'px'; el.style.display = (w > 0 && hh > 0) ? '' : 'none'; }
+
+function tutUpdate() {
+  const st = T.steps[T.i]; if (!T.layer || !st || T.finished) return;
+  const W = document.documentElement.clientWidth, H = window.innerHeight;
+  const el = st.sel ? qs(st.sel) : null;
+  let r = el ? el.getBoundingClientRect() : null;
+  if (r && (r.width < 2 || r.height < 2)) r = null;
+  if (r && T.scrolls < 3 && r.height < H * .8 && (r.top < 40 || r.bottom > H - 20)) { T.scrolls++; el.scrollIntoView({ block: 'center' }); r = el.getBoundingClientRect(); }
+  if (st.sel && !r) {
+    if (!T.missingSince) T.missingSince = Date.now();
+    else if (Date.now() - T.missingSince > 2200 && T.retries < 3) { T.retries++; T.missingSince = 0; tutEnter(T.i, 'retry'); return; }   // 見失ったら、この段の最初の状態に戻して出し直す
+  } else T.missingSince = 0;
+  const pad = 6, bt = lq('.tbubble'), dim = lq('.tdim'), ring = lq('.tring'), fg = lq('.tfinger');
+  const bs = { t: lq('[data-k=t]'), b: lq('[data-k=b]'), l: lq('[data-k=l]'), r: lq('[data-k=r]'), h: lq('[data-k=h]') };
+  let x1 = 0, y1 = 0, x2 = 0, y2 = 0;
+  if (r) {
+    x1 = Math.max(0, r.left - pad); y1 = Math.max(0, r.top - pad); x2 = Math.min(W, r.right + pad); y2 = Math.min(H, r.bottom + pad);
+    dim.style.display = 'none'; ring.style.display = '';
+    setBox(ring, x1, y1, x2 - x1, y2 - y1);
+    setBox(bs.t, 0, 0, W, y1); setBox(bs.b, 0, y2, W, H - y2); setBox(bs.l, 0, y1, x1, y2 - y1); setBox(bs.r, x2, y1, W - x2, y2 - y1);
+    if (st.type === 'next') setBox(bs.h, x1, y1, x2 - x1, y2 - y1); else bs.h.style.display = 'none';
+  } else {
+    ring.style.display = 'none'; dim.style.display = ''; Object.keys(bs).forEach(k => { bs[k].style.display = 'none'; });
+  }
+  // 指(押してほしい所だけ)
+  const showFinger = r && st.type !== 'next';
+  fg.style.display = showFinger ? '' : 'none';
+  let fingerBelow = false;
+  if (showFinger) {
+    const big = (y2 - y1) > H * .5;
+    fingerBelow = !big && y2 + 44 < H;
+    fg.textContent = fingerBelow ? '👆' : '👇';
+    fg.style.left = Math.min(W - 36, Math.max(4, (x1 + x2) / 2 - 15)) + 'px';
+    fg.style.top = (fingerBelow ? y2 + 2 : (big ? y2 - 40 : Math.max(2, y1 - 38))) + 'px';
+  }
+  // 吹き出し
+  const bw = Math.min(W - 24, 380); bt.style.width = bw + 'px';
+  const bh = bt.offsetHeight; let top, left = Math.max(12, Math.min(W - bw - 12, (r ? (x1 + x2) / 2 : W / 2) - bw / 2));
+  if (!r) top = Math.max(12, (H - bh) / 2);
+  else if (fingerBelow && y2 + 46 + bh + 8 <= H) top = y2 + 46;
+  else if (!fingerBelow && y2 + 10 + bh + 8 <= H && !showFinger) top = y2 + 10;
+  else if (y1 - bh - 44 >= 4) top = y1 - bh - (showFinger ? 44 : 10);
+  else top = ((y1 + y2) / 2 > H / 2) ? 8 : Math.max(8, H - bh - 8);
+  bt.style.left = left + 'px'; bt.style.top = Math.max(4, top) + 'px';
+  dakoPlace(r ? { x1, y1, x2, y2 } : null, !!(showFinger && r));
+}
+
+function drawBubble() {
+  const st = T.steps[T.i], b = T.bubble; b.textContent = '';
+  b.append(h('div', { class: 'thead' }, T.lesson.title + '  ' + (T.i + 1) + '/' + T.steps.length), h('div', { class: 'ttext' }, dakoTone(st.text)));
+  if (st.pic) b.append(st.pic());
+  const row = h('div', { class: 'tbtns' }, h('button', { type: 'button', class: 'tbtn', disabled: T.i === 0, onclick: () => tutBack() }, '戻る'));
+  if (st.type === 'next') row.append(h('button', { type: 'button', class: 'tbtn tprimary', onclick: () => tutAdvance() }, '次へ'));
+  row.append(h('button', { type: 'button', class: 'tbtn', onclick: () => tutQuit() }, 'やめる'));
+  b.append(row);
+  if (st.type !== 'next') b.append(h('button', { type: 'button', class: 'tskip', onclick: () => tutAdvance() }, 'うまくいかない時は、この段を飛ばす'));
+}
+
+function tutEnter(i, mode) {
+  T.i = i; const st = T.steps[i];
+  if (mode === 'fwd') { T.snaps[i] = snapTake(); T.retries = 0; } else if (T.snaps[i]) snapPut(T.snaps[i]);
+  T.adv = false; T.n = 0; T.h = ''; T.t0 = Date.now(); T.missingSince = 0; T.scrolls = 0;
+  if (st.ensure) st.ensure();
+  drawBubble(); tutUpdate();
+}
+function tutAdvance() {
+  if (T.adv || T.finished) return; T.adv = true; const t0 = Date.now();
+  const go = () => {
+    if (!T.lesson) return;
+    if (S.busy && Date.now() - t0 < 3000) { setTimeout(go, 60); return; }      // 保存の途中なら終わるのを待つ
+    setTimeout(() => { if (!T.lesson) return; if (T.i + 1 < T.steps.length) tutEnter(T.i + 1, 'fwd'); else tutFinish(); }, 90);
+  };
+  setTimeout(go, 80);
+}
+function tutBack() { if (T.i > 0 && !T.finished) tutEnter(T.i - 1, 'back'); }
+function tutTick() {
+  const st = T.steps[T.i]; if (!T.lesson || T.finished || !st) return;
+  if (st.type === 'until' && !T.adv) { let ok = false; try { ok = !!st.until(); } catch (e) {} if (ok) { tutAdvance(); return; } }
+  tutUpdate();
+}
+function tutClose() {
+  clearInterval(T.timer); T.timer = null;
+  if (T.layer) T.layer.remove(); T.layer = null; T.bubble = null; T.dako = null; T.lesson = null; T.steps = []; T.snaps = []; T.finished = false;
+  practiceLeave();
+}
+function tutQuit() { tutClose(); }
+function tutFinish() {
+  const d = tutLoad(); d.done[T.lesson.id] = true; d.seen = true; tutSave(d);
+  T.finished = true;
+  ['t', 'b', 'l', 'r', 'h'].forEach(k => { lq('[data-k=' + k + ']').style.display = 'none'; });
+  lq('.tring').style.display = 'none'; lq('.tfinger').style.display = 'none'; lq('.tdim').style.display = '';
+  const b = T.bubble; b.textContent = '';
+  b.append(h('div', { class: 'tdone' }, h('div', { class: 'big' }, '🎉 できたね!'), h('div', { class: 'ttext', style: 'margin-top:6px' }, T.lesson.title.replace(/^[①-⑦]\s*/, '') + ' の練習、おしまい。えらい!'),
+    h('div', { class: 'muted' }, '練習のデータは消えます。本番の記録はそのままです。')),
+    h('div', { class: 'tbtns', style: 'justify-content:center' },
+      h('button', { type: 'button', class: 'tbtn tprimary', onclick: () => { tutClose(); tutMenu(); } }, 'メニューにもどる'),
+      h('button', { type: 'button', class: 'tbtn', onclick: () => tutClose() }, 'おわる')));
+  const W = document.documentElement.clientWidth, H = window.innerHeight, bw = Math.min(W - 24, 380);
+  b.style.width = bw + 'px'; b.style.left = (W - bw) / 2 + 'px'; b.style.top = Math.max(12, (H - b.offsetHeight) / 2) + 'px';
+  if (T.dako) { dakoPlace(null, false); dakoPose(T.dako, 'j', '60deg', '1'); if (!T.dako.classList.contains('gone')) dakoPlay(T.dako, 'a1'); }   // 完了: よろこんで跳ねる
+  ['🎉', '✨', '🌸', '⭐'].forEach((em, k) => { for (let j = 0; j < 3; j++) T.layer.append(h('div', { class: 'tconf', style: 'left:' + (8 + ((k * 3 + j) * 8) % 84) + '%;animation-delay:' + ((k * 3 + j) * 0.12) + 's' }, em)); });
+}
+
+function tutStart(id) {
+  if (T.lesson || S.busy || S.adminOpen) return;
+  const L = LESSONS.find(x => x.id === id); if (!L) return;
+  $('tutMenuBox').textContent = '';
+  practiceEnter(L.demo);
+  T.lesson = L; T.steps = L.steps(); T.snaps = []; T.finished = false; T.retries = 0;
+  buildLayer(); T.timer = setInterval(tutTick, 150);
+  tutEnter(0, 'fwd');
+}
+function tutMenu() {
+  if (T.lesson || S.adminOpen) return;
+  const box = $('tutMenuBox'); box.textContent = ''; const done = tutLoad().done;
+  box.append(h('div', { class: 'modal', style: 'z-index:90' }, h('div', { class: 'panel', style: 'max-width:520px;margin-top:6vh' },
+    h('header', null, h('h2', { style: 'margin:0' }, 'チュートリアル'), h('button', { class: 'btn', type: 'button', onclick: () => { box.textContent = ''; } }, '閉じる')),
+    h('p', { class: 'muted' }, '練習用のデータで、本物の画面を触って覚えます。本番の記録・暗証番号・設定には触れません。'),
+    LESSONS.map(L => h('button', { type: 'button', class: 'tut-menu-item', onclick: () => tutStart(L.id) },
+      done[L.id] ? h('span', { class: 'done' }, '✓ 済') : null, L.title, h('span', { class: 'sub' }, L.sub))))));
+}
+function tutInviteCard() {
+  const mark = () => { const d = tutLoad(); d.seen = true; tutSave(d); };
+  return h('div', { class: 'banner tut-invite' }, h('b', null, 'はじめての方へ:'), ' 使い方を1分で体験できます',
+    h('div', { class: 'row' }, h('button', { type: 'button', class: 'btn primary', onclick: () => { mark(); tutStart('setup'); } }, 'はじめる'),
+      h('button', { type: 'button', class: 'btn', onclick: () => { mark(); renderMain(); } }, 'あとで')));
+}
+$('tutBtn').addEventListener('click', tutMenu);
+$('tutBtn').prepend(dakoNode(true));          // 「？チュートリアル」に小さく顔だけ(顔をタップ=動く、ほかの所をタップ=メニュー)
+document.addEventListener('click', ev => {                       // 押してほしい本物のボタンが押されたら、次の段へ
+  if (!T.lesson || T.adv || T.finished) return;
+  const st = T.steps[T.i]; if (!st || st.type !== 'tap') return;
+  const el = qs(st.sel); if (el && el.contains(ev.target)) tutAdvance();
+}, true);
+window.addEventListener('resize', tutUpdate);
+window.addEventListener('orientationchange', () => setTimeout(tutUpdate, 200));
+
 // ---------- 起動 ----------
-C.TYPE_JA_ = t => C.TYPE_JA[t] || t;
+C.TYPE_JA_ =t => C.TYPE_JA[t] || t;
 (async function start() {
   await Store.init();
   await Store.runProbe();

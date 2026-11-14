@@ -5,10 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
 <title>打刻の使い方</title>
-<link rel="canonical" href="https://lil-tplab.tech/tools/timeclock/guide.html">
-<meta property="og:type" content="website">
-<meta property="og:title" content="打刻の使い方">
-<meta property="og:url" content="https://lil-tplab.tech/tools/timeclock/guide.html">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <meta name="apple-mobile-web-app-title" content="打刻">
@@ -54,6 +50,9 @@
   summary { cursor:pointer; font-weight:700; min-height:44px; display:flex; align-items:center; }
   details p { margin:2px 0 8px; }
   .notice { background:#fff; border:2px dashed var(--warnline); }
+  .dk-g { display:inline-block; width:46px; height:43px; vertical-align:middle; margin-right:8px; }
+  .dk-g svg { width:100%; height:100%; display:block; }
+  .dk-g .fe-p, .dk-g .fe-j { display:none; }
   .foot { text-align:center; color:var(--mute); font-size:.9rem; margin-top:22px; }
 </style>
 </head>
@@ -63,8 +62,9 @@
 
   <div class="hero">
     <div class="emoji">⏱️🌷</div>
-    <h1>打刻の使い方</h1>
+    <h1><!--DAKO_G--><span class="dk-g" aria-hidden="true"><svg class="dkv" viewBox="16 6 68 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><ellipse class="dk-body" cx="50" cy="40" rx="31" ry="29" fill="#FF1493"/><ellipse cx="37" cy="23.5" rx="9" ry="4.6" fill="#fff" opacity=".34" transform="rotate(-24 37 23.5)"/><ellipse class="blush" cx="31" cy="48" rx="5.2" ry="3.1" fill="#ff9ec9" opacity=".5"/><ellipse class="blush" cx="69" cy="48" rx="5.2" ry="3.1" fill="#ff9ec9" opacity=".5"/><g class="fe-n"><circle cx="40" cy="38" r="5.4" fill="#fff"/><circle cx="40" cy="39" r="2.9" fill="#2a2f36"/><circle cx="41" cy="37.8" r="0.9" fill="#fff"/><circle cx="60" cy="38" r="5.4" fill="#fff"/><circle cx="60" cy="39" r="2.9" fill="#2a2f36"/><circle cx="61" cy="37.8" r="0.9" fill="#fff"/><path d="M44 49 Q50 54 56 49" fill="none" stroke="#2a2f36" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></g><g class="fe-p"><circle cx="40" cy="38" r="5.4" fill="#fff"/><circle cx="41.8" cy="39" r="2.9" fill="#2a2f36"/><circle cx="42.8" cy="37.8" r="0.9" fill="#fff"/><circle cx="60" cy="38" r="5.4" fill="#fff"/><circle cx="61.8" cy="39" r="2.9" fill="#2a2f36"/><circle cx="62.8" cy="37.8" r="0.9" fill="#fff"/><path d="M44 48 Q50 56 56 48" fill="none" stroke="#2a2f36" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></g><g class="fe-j"><path d="M34.5 39 Q40 31.5 45.5 39" fill="none" stroke="#2a2f36" stroke-width="2.6" stroke-linecap="round"/><path d="M54.5 39 Q60 31.5 65.5 39" fill="none" stroke="#2a2f36" stroke-width="2.6" stroke-linecap="round"/><path d="M43 46.5 Q50 60 57 46.5 Z" fill="#8a0040" stroke="#2a2f36" stroke-width="2" stroke-linejoin="round"/><path d="M46.5 53 Q50 50.5 53.5 53 Q50 57 46.5 53Z" fill="#ff7ab8"/></g></svg></span><!--/DAKO_G-->打刻の使い方</h1>
     <p>はじめての人も、これを読めば大丈夫です。</p>
+    <p><b>読むより触りたい人へ:</b> 打刻の画面の右下にある「？チュートリアル」を押すと、練習用のデータで本物の画面を触って覚えられます(本番の記録には触れません)。</p>
   </div>
 
   <nav class="toc">
@@ -253,6 +253,5 @@
   <div class="top" style="justify-content:center"><a class="back" href="./">⏱ 打刻にもどる</a></div>
   <p class="foot">美容師がつくった打刻 🌷</p>
 </div>
-<p class="foot"><a href="../privacy.html">プライバシー</a></p>
 </body>
 </html>
