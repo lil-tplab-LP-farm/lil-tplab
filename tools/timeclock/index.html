@@ -5,8 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
 <title>出退勤の打刻</title>
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-title" content="打刻">
+<meta name="theme-color" content="#1565c0">
 <style>
-  :root { --in:#1565c0; --out:#c62828; --brk:#2e7d32; --ink:#1b1f24; --mute:#5b6570; --line:#d5dae0; --bg:#f4f6f8; --card:#fff; --warn:#fff3cd; }
+  :root { --in:#1565c0; --out:#c62828; --brk:#2e7d32; --bak:#039be5; --ink:#1b1f24; --mute:#5b6570; --line:#d5dae0; --bg:#f4f6f8; --card:#fff; --warn:#fff3cd; }
   * { box-sizing:border-box; }
   html,body { margin:0; padding:0; background:var(--bg); color:var(--ink);
     font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif; }
@@ -31,10 +36,12 @@
   .staff.working .st { color:var(--in); font-weight:700; }
   .staff.selected { outline:4px solid #f9a825; }
   .actions { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:14px 0; }
-  .act { min-height:120px; border:none; border-radius:16px; color:#fff; font-size:clamp(1.6rem,7vw,2.6rem); font-weight:700; }
+  .act { min-height:128px; border:none; border-radius:18px; color:#fff; font-size:clamp(1.8rem,8vw,2.8rem); font-weight:700;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; }
+  .act .ic { font-size:.55em; line-height:1; }
   .act.in { background:var(--in); } .act.out { background:var(--out); }
-  .act.brk, .act.bak { min-height:76px; font-size:clamp(1.2rem,5vw,1.8rem); }
-  .act.brk { background:var(--brk); } .act.bak { background:#1976d2; }
+  .act.brk, .act.bak { min-height:104px; font-size:clamp(1.5rem,6.5vw,2.2rem); }
+  .act.brk { background:var(--brk); } .act.bak { background:var(--bak); }
   .staff .brk-mark { display:inline-block; margin-top:4px; padding:1px 8px; border-radius:6px; background:var(--brk); color:#fff; font-size:.78rem; font-weight:700; }
   .staff.onbreak { border-color:var(--brk); background:#e8f5e9; }
   .staff.onbreak .st { color:var(--brk); font-weight:700; }
@@ -42,13 +49,13 @@
   .act small { display:block; font-size:.9rem; font-weight:400; margin-top:4px; }
   .hint { color:var(--mute); margin:10px 0; }
   .frozen { border-radius:16px; color:#fff; padding:16px; text-align:center; font-size:clamp(1.6rem,7vw,3rem); font-weight:700; margin:6px 0 14px; }
-  .frozen.in { background:var(--in); } .frozen.out { background:var(--out); } .frozen.bin { background:var(--brk); } .frozen.bout { background:#1976d2; }
+  .frozen.in { background:var(--in); } .frozen.out { background:var(--out); } .frozen.bin { background:var(--brk); } .frozen.bout { background:var(--bak); }
   .frozen .t { font-family:ui-monospace,Menlo,Consolas,monospace; font-variant-numeric:tabular-nums; }
   .frozen small { display:block; font-size:.9rem; font-weight:400; margin-top:4px; }
   .overlay-result { position:fixed; left:12px; right:12px; top:12px; z-index:50; border-radius:16px; color:#fff; padding:18px;
     text-align:center; font-size:clamp(1.4rem,6vw,3rem); font-weight:700; box-shadow:0 8px 30px rgba(0,0,0,.35); }
   .overlay-result.in { background:var(--in); } .overlay-result.out { background:var(--out); }
-  .overlay-result.bin { background:var(--brk); } .overlay-result.bout { background:#1976d2; }
+  .overlay-result.bin { background:var(--brk); } .overlay-result.bout { background:var(--bak); }
   .overlay-result .t { font-family:ui-monospace,Menlo,Consolas,monospace; display:block; }
   .undo-bar { position:fixed; left:12px; right:12px; bottom:12px; z-index:49; background:#fff; border:2px solid #444; border-radius:12px;
     padding:10px; display:flex; gap:10px; align-items:center; justify-content:space-between; }
@@ -87,11 +94,6 @@
 </div>
 <main id="main"></main>
 <footer>
-  <ul>
-    <li>時刻は、この端末の時計を使っています。</li>
-    <li>記録は、この端末の中だけにあります。ブラウザのデータを消すと消えます。月に1回は、管理画面でバックアップを保存してください。</li>
-    <li>これは記録の道具です。休憩の時間は測りますが、労務の判断(休憩が足りているか、残業・給与の計算など)はしません。</li>
-  </ul>
   <button class="admin-link" id="adminBtn" type="button">管理画面</button>
   <a class="guide-link" href="guide.html">使い方</a>
 </footer>
@@ -566,19 +568,18 @@ function candButtons(cands, pd, stale) {
   }));
 }
 function ageText(pd) { return Math.max(0, Math.floor((Date.now() - pd.ts) / 1000)) + '秒前'; }
-function leftText(pd) { return 'あと' + Math.max(0, Math.ceil((pd.ts + C.PENDING_MS - Date.now()) / 1000)) + '秒で自動的に捨てます'; }
+function leftText(pd) { return 'あと' + Math.max(0, Math.ceil((pd.ts + C.PENDING_MS - Date.now()) / 1000)) + '秒'; }
 
 function renderMain() {
   const main = $('main'); main.textContent = '';
   S.pends = C.prunePendings(S.pends, Date.now());
   const punches = getPunches();
   const active = getStaff().filter(s => s.active);
-  main.append(h('div', { class: 'muted', style: 'margin-bottom:8px;font-size:.78rem' + (Store.probe.ok ? '' : ';color:#c62828;font-weight:700') }, backupLine()));
   if (S.msg) main.append(h('div', { class: 'banner' + (S.msg.err ? ' err' : '') }, S.msg.text));
   if (Store.mode === 'memory') main.append(h('div', { class: 'banner err' }, 'このブラウザでは記録を保存できません。ページを閉じると記録が消えます。(プライベートモードを使っていませんか?)'));
   else if (!Store.probe.ok) main.append(h('div', { class: 'banner err' }, '保存テストに失敗しました(' + Store.probe.text + ')。記録が残らないかもしれません。別のブラウザで開き直してください。'));
   const bdays = C.daysSince(Store.meta.lastBackupAt, Date.now());
-  if (Store.log.length && (bdays === null || bdays >= 30)) main.append(h('div', { class: 'banner' }, bdays === null ? 'まだバックアップを保存していません。管理画面から保存してください。' : 'バックアップから' + bdays + '日たっています。管理画面から保存してください。'));
+  if (Store.log.length && (bdays === null || bdays >= 30)) main.append(h('div', { class: 'banner' }, bdays === null ? 'まだバックアップがありません(管理画面から保存)' : 'バックアップから' + bdays + '日たっています(管理画面から保存)'));
   const working = active.filter(s => C.staffStatus(punches, s.id).working);
   const resting = working.filter(s => C.staffStatus(punches, s.id).onBreak).length;
   $('workingCount').textContent = active.length ? '出勤中 ' + working.length + '人 / ' + active.length + '人' + (resting ? '(うち休憩中 ' + resting + '人)' : '') : '';
@@ -588,14 +589,14 @@ function renderMain() {
   const held = S.repress ? S.pends : S.pends.slice(0, -1);
 
   if (!act) {
-    if (S.repress) main.append(h('p', { class: 'hint' }, '自分の分を押してください。前に押された分は、下に残っています。'));
+    if (S.repress) main.append(h('p', { class: 'hint' }, '自分の分を押してください'));
+    const actBtn = (cls, type, ic, label) => h('button', { type: 'button', class: 'act ' + cls, onclick: () => press(type) }, h('span', { class: 'ic', 'aria-hidden': 'true' }, ic), label);
     main.append(h('div', { class: 'actions' },
-      h('button', { type: 'button', class: 'act in', onclick: () => press('in') }, '出勤'),
-      h('button', { type: 'button', class: 'act out', onclick: () => press('out') }, '退勤'),
-      h('button', { type: 'button', class: 'act brk', onclick: () => press('bin') }, '休憩'),
-      h('button', { type: 'button', class: 'act bak', onclick: () => press('bout') }, '戻り')));
+      actBtn('in', 'in', '☀️', '出勤'),
+      actBtn('out', 'out', '🌙', '退勤'),
+      actBtn('brk', 'bin', '☕', '休憩'),
+      actBtn('bak', 'bout', '↩️', '戻り')));
     if (S.repress) main.append(h('div', { class: 'row' }, h('button', { type: 'button', class: 'btn', onclick: () => { S.repress = false; renderMain(); } }, 'もどる')));
-    else main.append(h('p', { class: 'hint' }, '先に「出勤」「退勤」「休憩」「戻り」のどれかを押してください。そのあと名前を選びます。(押した時刻が記録されます)'));
     if (working.length) {
       main.append(h('h2', null, '出勤中'));
       main.append(h('div', { class: 'staff-grid' }, working.map(s => {
@@ -609,8 +610,8 @@ function renderMain() {
   } else {
     // 押した瞬間の時刻を止めて見せる → 名前を選ぶ
     main.append(h('div', { class: 'frozen ' + act.type, role: 'status' }, C.TYPE_JA_(act.type) + ' ',
-      h('span', { class: 't' }, C.fmtTime(act.ts)), h('small', null, '押した時刻はこれで記録されます')));
-    main.append(h('p', { class: 'hint' }, 'これは', h('b', { class: 'pAge', 'data-ts': act.ts }, ageText(act)), 'に押された分です。自分の分でなければ「自分の分を押し直す」を押してください。'));
+      h('span', { class: 't' }, C.fmtTime(act.ts))));
+    main.append(h('p', { class: 'hint' }, h('b', { class: 'pAge', 'data-ts': act.ts }, ageText(act)), 'に押された分'));
     const cands = C.candidatesFor(punches, active, act.type);
     const stale = act.type === 'in' ? C.staleOpen(punches, active, act.ts) : [];
     main.append(h('h2', null, '誰ですか?'));
@@ -618,16 +619,15 @@ function renderMain() {
     if (cands.length) main.append(candButtons(cands, act, false));
     if (stale.length) {
       main.append(h('h2', { style: 'margin-top:14px' }, '前回の退勤が未入力の人'),
-        h('p', { class: 'muted' }, '選ぶと、前回の退勤は未入力のまま残し、今日の出勤を記録します。(あとで管理画面の「打刻を追加」で前回の退勤を足せます)'),
         candButtons(stale, act, true));
     }
     main.append(h('div', { class: 'row', style: 'margin-top:14px' },
       h('button', { type: 'button', class: 'btn primary', onclick: () => { S.repress = true; renderMain(); } }, '自分の分を押し直す'),
-      h('button', { type: 'button', class: 'btn', onclick: () => dropPending(act) }, 'この分をやめる'),
+      h('button', { type: 'button', class: 'btn', onclick: () => dropPending(act) }, 'やめる'),
       h('span', { class: 'muted pLeft', 'data-ts': act.ts }, leftText(act))));
   }
   if (held.length) {
-    main.append(h('h2', { style: 'margin-top:18px;font-size:.9rem' }, '前に押された分(名前を選べます)'));
+    main.append(h('h2', { style: 'margin-top:18px;font-size:.9rem' }, '前に押された分'));
     held.forEach(pd => {
       const hc = C.candidatesFor(punches, active, pd.type);
       const hs = pd.type === 'in' ? C.staleOpen(punches, active, pd.ts) : [];

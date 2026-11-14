@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
 <title>打刻の使い方</title>
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<meta name="apple-mobile-web-app-title" content="打刻">
+<meta name="theme-color" content="#1565c0">
 <style>
   :root { --in:#1565c0; --out:#c62828; --ink:#2a2f36; --mute:#66707b; --bg:#f3f8fd; --card:#fff;
     --inbg:#e3f0fc; --outbg:#fdeaea; --warn:#fff6dc; --warnline:#ecd48a; }
@@ -33,7 +37,7 @@
   ul,ol { margin:6px 0; padding-left:1.4em; }
   li { margin:4px 0; }
   .btn-in,.btn-out,.btn-brk,.btn-bak { display:inline-block; padding:0 .7em; border-radius:10px; color:#fff; font-weight:700; line-height:1.6; }
-  .btn-in { background:var(--in); } .btn-out { background:var(--out); } .btn-brk { background:#2e7d32; } .btn-bak { background:#1976d2; }
+  .btn-in { background:var(--in); } .btn-out { background:var(--out); } .btn-brk { background:#2e7d32; } .btn-bak { background:#039be5; }
   .chip { display:inline-block; padding:0 .6em; border:1px solid #9aa4af; border-radius:8px; background:#f6f7f9; font-weight:700; line-height:1.6; }
   .promise { display:flex; gap:12px; align-items:flex-start; background:var(--inbg); border-radius:14px; padding:10px 12px; margin:10px 0; }
   .promise .ic { font-size:1.7rem; line-height:1.3; flex:none; }
@@ -87,12 +91,21 @@
     <h2><span class="no">2</span>はじめの準備</h2>
     <p>最初に1回だけ、やります。</p>
     <ol>
-      <li><b>URLをブックマークします。</b><br>いつも同じURL(アドレス)で開いてください。記録は「そのURL」の中に入ります。URLが変わると、別の記録になって、消えたように見えます。</li>
-      <li><b>iPhone・iPadは「ホーム画面に追加」します。</b><br>Safari(アイフォンの標準のブラウザ=ネットを見るアプリ)は、長く開かないと記録を消すことがあります。ホーム画面に追加しておくと安心です。</li>
+      <li><b>iPhone・iPadは、Safariで開いて「ホーム画面に追加」します。</b><br>Safari(アイフォンの標準のブラウザ=ネットを見るアプリ)で打刻のページを開き、下の <span class="chip">共有</span>(□から上向きの矢印)→ <span class="chip">ホーム画面に追加</span> を押します。ホーム画面に「打刻」のアイコン(ストップウォッチ)ができます。<b>これ以降は、このアイコンから開いてください。</b>次の手順の最初の設定(暗証番号・スタッフ登録)も、アイコンから開いて行います。Safariは、長く開かないと記録を消すことがあるので、ホーム画面に入れておくと安心です。</li>
+      <li><b>パソコン・Androidは、URLをブックマークします。</b><br>いつも同じURL(アドレス)で開いてください。記録は「そのURL」の中に入ります。URLが変わると、別の記録になって、消えたように見えます。</li>
       <li><b>下の方の <span class="chip">管理画面</span> を押して、暗証番号を決めます。</b><br>数字4桁を、2つの欄に同じように入れます。これは、まちがって管理画面を開かないためのものです。強い鍵ではありません。</li>
       <li><b>スタッフを登録します。</b><br>管理画面の「スタッフ」で、名前を入れて <span class="chip">追加</span> を押します。</li>
     </ol>
-    <div class="tip">💡 同じ端末で、同じブラウザを使ってください。ブラウザが変わると、別の記録になります。</div>
+    <div class="tip">💡 同じ端末で、同じブラウザ(またはアイコン)を使ってください。変わると、別の記録になります。</div>
+    <div class="tip out">⚠️ <b>iPhoneでは、「Safariで開いた打刻」と「ホーム画面のアイコンから開いた打刻」は、記録が別々になります。</b>(消えたのではなく、別の入れ物に入っています)<br>
+      <b>すでにSafariで使い始めている店は、次のどちらかにしてください。</b><br>
+      ① そのままSafariで使い続ける。(ホーム画面に追加しなくても、これまで通り使えます)<br>
+      ② アイコンに引っこしする。<br>
+      　1. 今までのSafariの打刻で、管理画面の <span class="chip">バックアップ</span> →「全データをバックアップ(JSON)」を押して、ファイルを保存します。<br>
+      　2. 上の手順で「ホーム画面に追加」をして、<b>アイコンから</b>打刻を開きます。<br>
+      　3. アイコンの打刻で、管理画面(暗証番号を決めます)→ <span class="chip">バックアップ</span> → ファイルを選んで <span class="chip">復元する</span> を押します。<br>
+      　4. スタッフと過去の記録が出ていれば、引っこし完了です。以後はアイコンだけを使い、Safariの方は開かないようにします。<br>
+      引っこしの途中でやめても、Safari側の記録はそのまま残ります。</div>
   </section>
 
   <section id="s3">
@@ -105,7 +118,9 @@
       <li>「◯◯さん 出勤」と出たら、記録できました。🎉</li>
     </ol>
     <p>記録される時刻は、<b>ボタンを押した瞬間の時刻</b>です。名前を選ぶのが少し遅くなっても大丈夫です。</p>
-    <div class="tip in">💡 名前を選ばないまま30秒たつと、その分は捨てられます。もう一度ボタンから押してください。</div>
+    <div class="tip in">💡 名前を選ばないまま30秒たつと、その分は捨てられます。もう一度ボタンから押してください。名前を選ぶ画面の「あと◯秒」は、捨てられるまでの残り時間です。<span class="chip">やめる</span> を押すと、その分をすぐ捨てます。</div>
+    <p>ボタンは色で分かれています。<span class="btn-in">出勤</span>は青、<span class="btn-out">退勤</span>は赤、<span class="btn-brk">休憩</span>は緑、<span class="btn-bak">戻り</span>は水色です。</p>
+    <p>時刻は、この端末の時計を使っています。画面の上の時計と、出勤中の人数・一覧も、同じ時計と記録から出ています。</p>
     <p>出勤を押した時は「いま出勤していない人」、退勤を押した時は「いま出勤中の人」、休憩を押した時は「出勤中で休憩中でない人」だけが出ます。</p>
     <p><b>休憩のとき</b>も同じです。</p>
     <ol>
@@ -212,7 +227,11 @@
     </details>
     <details>
       <summary>記録が残っているか心配</summary>
-      <p>画面の上に「保存テスト」の結果と「バックアップ最終日」が出ています。保存テストが赤く出たら、別のブラウザで開き直してください。</p>
+      <p>管理画面の「バックアップ」の下に、「保存テスト」の結果と「バックアップ最終日」が出ています。打刻の画面では、保存テストに失敗した時は赤い警告が出ます。出たら、別のブラウザで開き直してください。バックアップが30日以上ない時も、短いお知らせが出ます。</p>
+    </details>
+    <details>
+      <summary>iPhoneで、アイコンから開いたら記録が空っぽだった</summary>
+      <p>消えていません。Safariで開いた打刻と、ホーム画面のアイコンから開いた打刻は、記録が別々です。Safariで使っていた店は、「はじめの準備」の引っこしの手順(バックアップ→アイコン側で復元)をしてください。</p>
     </details>
   </section>
 
