@@ -4,3 +4,4 @@ Disallow: /go/
 Disallow: /yuna/go/
 
 Sitemap: https://lil-tplab.tech/sitemap.xml
+Sitemap: https://lil-tplab.tech/sitemap-tools.xml
